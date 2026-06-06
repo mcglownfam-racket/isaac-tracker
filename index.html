@@ -8,18 +8,18 @@
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@400;600;700;800&display=swap');
 
   :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface2: #1c1c28;
-    --border: #2a2a3a;
-    --accent: #c8f135;
-    --accent2: #35c8f1;
-    --warn: #f1a035;
-    --danger: #f13535;
-    --text: #e8e8f0;
-    --muted: #5a5a78;
-    --isaac: #c8f135;
-    --opp: #f13535;
+    --bg: #faf6f0;
+    --surface: #ffffff;
+    --surface2: #f0ebe3;
+    --border: #e0d8cc;
+    --accent: #c85a1a;
+    --accent2: #1a6bc8;
+    --warn: #c87d1a;
+    --danger: #c0392b;
+    --text: #1a1410;
+    --muted: #9a8878;
+    --isaac: #1a7a3a;
+    --opp: #c0392b;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -51,7 +51,7 @@
     font-size: 18px; font-weight: 600; padding: 12px 14px; outline: none; transition: border-color 0.15s;
   }
   input:focus, select:focus { border-color: var(--accent); }
-  select option { background: var(--surface2); }
+  select option { background: #ffffff; color: #1a1410; }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
   .toggle-row { display: flex; gap: 8px; }
@@ -61,34 +61,36 @@
     font-size: 16px; font-weight: 700; padding: 12px; cursor: pointer; text-align: center;
     transition: all 0.12s; text-transform: uppercase;
   }
-  .toggle-btn.on-isaac { background: rgba(200,241,53,0.15); border-color: var(--isaac); color: var(--isaac); }
-  .toggle-btn.on-opp   { background: rgba(241,53,53,0.15);  border-color: var(--opp);   color: var(--opp); }
+  .toggle-btn.on-isaac { background: rgba(26,122,58,0.12); border-color: #1a7a3a; color: #1a7a3a; }
+  .toggle-btn.on-opp   { background: rgba(192,57,43,0.12);  border-color: #c0392b; color: #c0392b; }
 
   .btn-primary {
-    background: var(--accent); color: #0a0a0f; border: none; border-radius: 10px;
+    background: #1a1410; color: #faf6f0; border: none; border-radius: 10px;
     font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800;
     letter-spacing: 0.05em; padding: 16px; width: 100%; cursor: pointer;
     transition: transform 0.1s, opacity 0.1s; text-transform: uppercase;
+    box-shadow: 0 4px 12px rgba(26,20,16,0.15);
   }
   .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
 
   /* ── MATCH HEADER ── */
   .match-header {
-    background: var(--surface); border-bottom: 1px solid var(--border);
+    background: #ffffff; border-bottom: 1.5px solid var(--border);
     padding: 10px 16px; display: flex; align-items: center;
     justify-content: space-between; position: sticky; top: 0; z-index: 10;
+    box-shadow: 0 2px 8px rgba(26,20,16,0.06);
   }
 
   .scoreboard { display: flex; align-items: center; gap: 10px; }
   .sb-player { text-align: center; }
   .sb-name { font-size: 9px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; }
   .sb-sets { font-size: 30px; font-weight: 800; line-height: 1; }
-  .sb-sets.isaac { color: var(--accent); }
-  .sb-sets.opp   { color: var(--opp); }
+  .sb-sets.isaac { color: #1a7a3a; }
+  .sb-sets.opp   { color: #c0392b; }
   .sb-div { color: var(--border); font-size: 22px; }
 
   .game-context { text-align: right; }
-  .gc-set { font-size: 13px; font-weight: 700; color: var(--accent2); letter-spacing: 0.06em; }
+  .gc-set { font-size: 13px; font-weight: 700; color: #c85a1a; letter-spacing: 0.06em; }
   .gc-game { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
 
   /* ── MATCH BODY ── */
@@ -96,22 +98,23 @@
 
   /* ── SCORE DISPLAY ── */
   .score-display {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
     padding: 14px; display: flex; flex-direction: column; gap: 8px;
+    box-shadow: 0 2px 8px rgba(26,20,16,0.06);
   }
 
   .score-row { display: flex; align-items: center; justify-content: space-between; }
 
   .score-server-pip {
-    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    width: 8px; height: 8px; border-radius: 50%; background: #c85a1a;
     display: inline-block; margin-right: 6px; opacity: 0;
   }
   .score-server-pip.visible { opacity: 1; }
 
   .score-player-name { font-size: 15px; font-weight: 700; letter-spacing: 0.04em; }
   .score-game-score { font-size: 32px; font-weight: 800; line-height: 1; min-width: 60px; text-align: right; }
-  .score-game-score.isaac { color: var(--accent); }
-  .score-game-score.opp   { color: var(--opp); }
+  .score-game-score.isaac { color: #1a7a3a; }
+  .score-game-score.opp   { color: #c0392b; }
 
   .score-set-history { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
 
@@ -122,8 +125,8 @@
   }
   .sc-left { font-size: 13px; font-weight: 700; }
   .sc-left em { font-style: normal; }
-  .sc-left em.serving { color: var(--accent2); }
-  .sc-left em.returning { color: var(--warn); }
+  .sc-left em.serving   { color: #1a6bc8; }
+  .sc-left em.returning { color: #c87d1a; }
   .sc-serve-num {
     font-family: 'DM Mono', monospace; font-size: 11px;
     background: var(--surface); border: 1px solid var(--border);
@@ -152,17 +155,17 @@
   .action-btn .ab-label { font-size: 15px; font-weight: 700; letter-spacing: 0.03em; color: var(--text); }
   .action-btn .ab-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
 
-  .action-btn.col-green  { border-color: var(--isaac); }
-  .action-btn.col-red    { border-color: var(--opp); }
-  .action-btn.col-blue   { border-color: var(--accent2); }
-  .action-btn.col-yellow { border-color: var(--warn); }
-  .action-btn.col-danger { border-color: var(--danger); }
+  .action-btn.col-green  { border-color: #1a7a3a; }
+  .action-btn.col-red    { border-color: #c0392b; }
+  .action-btn.col-blue   { border-color: #1a6bc8; }
+  .action-btn.col-yellow { border-color: #c87d1a; }
+  .action-btn.col-danger { border-color: #c0392b; }
 
-  .action-btn.col-green:active  { background: rgba(200,241,53,0.15); }
-  .action-btn.col-red:active    { background: rgba(241,53,53,0.15); }
-  .action-btn.col-blue:active   { background: rgba(53,200,241,0.15); }
-  .action-btn.col-yellow:active { background: rgba(241,160,53,0.15); }
-  .action-btn.col-danger:active { background: rgba(241,53,53,0.2); }
+  .action-btn.col-green:active  { background: rgba(26,122,58,0.1); }
+  .action-btn.col-red:active    { background: rgba(192,57,43,0.1); }
+  .action-btn.col-blue:active   { background: rgba(26,107,200,0.1); }
+  .action-btn.col-yellow:active { background: rgba(200,125,26,0.1); }
+  .action-btn.col-danger:active { background: rgba(192,57,43,0.12); }
 
   /* ── OUTCOME BUTTONS (step 2) ── */
   .outcome-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -179,23 +182,40 @@
   .grade-btn {
     flex: 1; border: 1.5px solid var(--border); border-radius: 8px;
     background: var(--surface2); color: var(--muted);
-    font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 800;
-    padding: 11px 4px; cursor: pointer; transition: all 0.12s; text-align: center;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 800;
+    padding: 12px 4px; cursor: pointer; transition: all 0.12s; text-align: center; line-height: 1.2;
   }
   .grade-btn:active { transform: scale(0.95); }
-  .grade-btn.sel-1 { background: rgba(241,53,53,0.2);   border-color: var(--danger); color: var(--danger); }
-  .grade-btn.sel-2 { background: rgba(241,160,53,0.2);  border-color: var(--warn);   color: var(--warn); }
-  .grade-btn.sel-3 { background: rgba(100,100,160,0.3); border-color: #6464a0;        color: #9090d0; }
-  .grade-btn.sel-4 { background: rgba(200,241,53,0.12); border-color: var(--accent);  color: var(--accent); }
-  .grade-btn.sel-5 { background: rgba(200,241,53,0.28); border-color: var(--accent);  color: var(--accent); }
+  .grade-btn.sel-pos  { background: rgba(26,122,58,0.12);  border-color: #1a7a3a; color: #1a7a3a; }
+  .grade-btn.sel-zero { background: rgba(100,100,120,0.1); border-color: #9a8878; color: #5a4a3a; }
+  .grade-btn.sel-neg  { background: rgba(192,57,43,0.12);  border-color: #c0392b; color: #c0392b; }
+
+  /* ── TREND CHARTS ── */
+  .charts-section { display: flex; flex-direction: column; gap: 12px; }
+  .chart-card {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    box-shadow: 0 1px 4px rgba(26,20,16,0.06);
+  }
+  .chart-title {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); font-family: 'DM Mono', monospace; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .chart-title span { font-size: 14px; font-weight: 800; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0; }
+  .chart-title span.pos  { color: #1a7a3a; }
+  .chart-title span.neg  { color: #c0392b; }
+  .chart-title span.zero { color: var(--muted); }
+  .chart-wrap { width: 100%; height: 80px; }
+  .chart-wrap svg { width: 100%; height: 100%; overflow: visible; }
 
   .end-game-btn {
-    background: var(--surface2); border: 1.5px solid var(--accent2); border-radius: 10px;
-    color: var(--accent2); font-family: 'Barlow Condensed', sans-serif; font-size: 16px;
+    background: var(--surface2); border: 1.5px solid #1a6bc8; border-radius: 10px;
+    color: #1a6bc8; font-family: 'Barlow Condensed', sans-serif; font-size: 16px;
     font-weight: 700; letter-spacing: 0.08em; padding: 14px; width: 100%;
     cursor: pointer; text-transform: uppercase; transition: all 0.12s;
   }
-  .end-game-btn:active { background: rgba(53,200,241,0.15); }
+  .end-game-btn:active { background: rgba(26,107,200,0.1); }
 
   /* ── GAME LOG ── */
   .game-log { display: flex; flex-direction: column; gap: 6px; }
@@ -205,17 +225,17 @@
   }
   .log-game-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); min-width: 56px; }
   .log-score { font-weight: 700; font-size: 15px; }
-  .log-score.isaac { color: var(--accent); }
-  .log-score.opp   { color: var(--opp); }
+  .log-score.isaac { color: #1a7a3a; }
+  .log-score.opp   { color: #c0392b; }
   .log-grades { display: flex; gap: 8px; font-family: 'DM Mono', monospace; font-size: 11px; }
-  .log-c { color: var(--accent2); }
-  .log-i { color: var(--warn); }
+  .log-c { color: #1a6bc8; }
+  .log-i { color: #c87d1a; }
 
   /* ── POINT HISTORY DOTS ── */
   .point-strip { display: flex; flex-wrap: wrap; gap: 4px; min-height: 14px; }
   .point-dot { width: 10px; height: 10px; border-radius: 50%; }
-  .point-dot.iw { background: var(--accent); }
-  .point-dot.ow { background: var(--opp); }
+  .point-dot.iw { background: #1a7a3a; }
+  .point-dot.ow { background: #c0392b; }
 
   /* ── SUMMARY ── */
   #summary { padding: 24px 20px; gap: 20px; overflow-y: auto; }
@@ -231,7 +251,7 @@
   .stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .bar-wrap { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
   .bar-bg { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width 0.5s ease; }
+  .bar-fill { height: 100%; border-radius: 4px; background: #c85a1a; transition: width 0.5s ease; }
   .bar-pct { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); min-width: 36px; text-align: right; }
 
   .gbg-row {
@@ -241,10 +261,10 @@
   }
   .gbg-game { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
   .gbg-winner { font-weight: 700; font-size: 13px; }
-  .gbg-winner.isaac { color: var(--accent); }
-  .gbg-winner.opp   { color: var(--opp); }
-  .gbg-c { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent2); text-align: center; }
-  .gbg-i { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--warn); text-align: center; }
+  .gbg-winner.isaac { color: #1a7a3a; }
+  .gbg-winner.opp   { color: #c0392b; }
+  .gbg-c { font-family: 'DM Mono', monospace; font-size: 12px; color: #1a6bc8; text-align: center; }
+  .gbg-i { font-family: 'DM Mono', monospace; font-size: 12px; color: #c87d1a; text-align: center; }
 
   .action-row { display: flex; gap: 10px; }
   .btn-secondary {
@@ -262,7 +282,7 @@
   .toast {
     position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(80px);
-    background: var(--accent); color: #0a0a0f;
+    background: #1a1410; color: #faf6f0;
     font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700;
     letter-spacing: 0.08em; padding: 10px 20px; border-radius: 100px;
     transition: transform 0.3s ease; z-index: 100; white-space: nowrap; text-transform: uppercase;
@@ -286,6 +306,16 @@
     <div>
       <label>Opponent Name</label>
       <input type="text" id="opp-name" placeholder="Last, First" autocomplete="off">
+    </div>
+    <div class="row2">
+      <div>
+        <label>Opp WTN</label>
+        <input type="text" id="opp-wtn" placeholder="e.g. 28.5" inputmode="decimal">
+      </div>
+      <div>
+        <label>Opp UTR</label>
+        <input type="text" id="opp-utr" placeholder="e.g. 6.8" inputmode="decimal">
+      </div>
     </div>
     <div class="row2">
       <div>
@@ -474,21 +504,17 @@
         <div class="grade-row">
           <div class="grade-label">Composure <span>Measured · Controlled · Present</span></div>
           <div class="grade-buttons">
-            <button class="grade-btn" data-type="composure" data-val="1" onclick="setGrade('composure',1)">1</button>
-            <button class="grade-btn" data-type="composure" data-val="2" onclick="setGrade('composure',2)">2</button>
-            <button class="grade-btn" data-type="composure" data-val="3" onclick="setGrade('composure',3)">3</button>
-            <button class="grade-btn" data-type="composure" data-val="4" onclick="setGrade('composure',4)">4</button>
-            <button class="grade-btn" data-type="composure" data-val="5" onclick="setGrade('composure',5)">5</button>
+            <button class="grade-btn" data-type="composure" data-val="1" onclick="setGrade('composure',1)">Above Avg<br>+1</button>
+            <button class="grade-btn" data-type="composure" data-val="0" onclick="setGrade('composure',0)">Avg<br>0</button>
+            <button class="grade-btn" data-type="composure" data-val="-1" onclick="setGrade('composure',-1)">Below Avg<br>−1</button>
           </div>
         </div>
         <div class="grade-row">
           <div class="grade-label">Intensity <span>Active · Focused · Physical energy</span></div>
           <div class="grade-buttons">
-            <button class="grade-btn" data-type="intensity" data-val="1" onclick="setGrade('intensity',1)">1</button>
-            <button class="grade-btn" data-type="intensity" data-val="2" onclick="setGrade('intensity',2)">2</button>
-            <button class="grade-btn" data-type="intensity" data-val="3" onclick="setGrade('intensity',3)">3</button>
-            <button class="grade-btn" data-type="intensity" data-val="4" onclick="setGrade('intensity',4)">4</button>
-            <button class="grade-btn" data-type="intensity" data-val="5" onclick="setGrade('intensity',5)">5</button>
+            <button class="grade-btn" data-type="intensity" data-val="1" onclick="setGrade('intensity',1)">Above Avg<br>+1</button>
+            <button class="grade-btn" data-type="intensity" data-val="0" onclick="setGrade('intensity',0)">Avg<br>0</button>
+            <button class="grade-btn" data-type="intensity" data-val="-1" onclick="setGrade('intensity',-1)">Below Avg<br>−1</button>
           </div>
         </div>
         <button class="end-game-btn" onclick="confirmEndGame()">Confirm Game → Next</button>
@@ -499,6 +525,29 @@
     <div id="game-log-section" style="display:none;">
       <div class="section-head">Games Logged</div>
       <div class="game-log" id="game-log"></div>
+    </div>
+
+    <!-- Live trend charts -->
+    <div id="live-charts" style="display:none;">
+      <div class="section-head" style="margin-bottom:8px;">Trend Charts</div>
+      <div class="charts-section">
+        <div class="chart-card">
+          <div class="chart-title">Composure <span id="lc-composure-val" class="zero">—</span></div>
+          <div class="chart-wrap"><svg id="lc-composure"></svg></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Intensity <span id="lc-intensity-val" class="zero">—</span></div>
+          <div class="chart-wrap"><svg id="lc-intensity"></svg></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Serve <span id="lc-serve-val" class="zero">—</span></div>
+          <div class="chart-wrap"><svg id="lc-serve"></svg></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Points <span id="lc-points-val" class="zero">—</span></div>
+          <div class="chart-wrap"><svg id="lc-points"></svg></div>
+        </div>
+      </div>
     </div>
 
     <button class="btn-primary" onclick="endMatch()">End Match → Summary</button>
@@ -513,6 +562,29 @@
     <div class="meta" id="sum-meta"></div>
   </div>
   <div class="stat-grid" id="stat-grid"></div>
+
+  <!-- Summary trend charts -->
+  <div>
+    <div class="section-head" style="margin-bottom:8px;">Trend Charts</div>
+    <div class="charts-section">
+      <div class="chart-card">
+        <div class="chart-title">Composure <span id="sc-composure-val" class="zero">—</span></div>
+        <div class="chart-wrap"><svg id="sc-composure"></svg></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Intensity <span id="sc-intensity-val" class="zero">—</span></div>
+        <div class="chart-wrap"><svg id="sc-intensity"></svg></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Serve <span id="sc-serve-val" class="zero">—</span></div>
+        <div class="chart-wrap"><svg id="sc-serve"></svg></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Points <span id="sc-points-val" class="zero">—</span></div>
+        <div class="chart-wrap"><svg id="sc-points"></svg></div>
+      </div>
+    </div>
+  </div>
   <div>
     <div class="section-head" style="margin-bottom:8px;">Game-by-Game</div>
     <div style="display:flex;flex-direction:column;gap:6px;" id="gbg-list"></div>
@@ -585,6 +657,8 @@ function startMatch() {
   if (!opp) { showToast('Enter opponent name'); return; }
   M.setup = {
     opp,
+    oppWtn: document.getElementById('opp-wtn').value.trim() || '—',
+    oppUtr: document.getElementById('opp-utr').value.trim() || '—',
     date:    document.getElementById('match-date').value || new Date().toISOString().split('T')[0],
     level:   document.getElementById('match-level').value,
     round:   document.getElementById('match-round').value,
@@ -724,8 +798,171 @@ function setGrade(type, val) {
   M.game[type] = val;
   document.querySelectorAll(`[data-type="${type}"]`).forEach(b => {
     b.className = 'grade-btn';
-    if (parseInt(b.dataset.val) === val) b.classList.add('sel-' + val);
+    const bVal = parseInt(b.dataset.val);
+    if (bVal === val) {
+      if (val === 1)  b.classList.add('sel-pos');
+      if (val === 0)  b.classList.add('sel-zero');
+      if (val === -1) b.classList.add('sel-neg');
+    }
   });
+}
+
+// ═══════════════════════════════════════════════════════
+// CHART ENGINE
+// ═══════════════════════════════════════════════════════
+function computeTrends(games) {
+  // Returns {composure, intensity, serve, points} — each an array of cumulative values per game
+  let cC=0, cI=0, cS=0, cP=0;
+  const composure=[], intensity=[], serve=[], points=[];
+
+  games.forEach(g => {
+    // Composure & intensity: +1/0/-1 per game
+    cC += g.composure;
+    cI += g.intensity;
+
+    // Serve score per game
+    let gServe = 0;
+    g.points.forEach(p => {
+      if (p.server === 'isaac') {
+        if (p.serveResult === 'ace')   gServe += 3;
+        else if (p.serveResult === 'df') gServe -= 3;
+        else if (p.serve === 1)        gServe += 2;
+        else if (p.serve === 2)        gServe += 1;
+      }
+    });
+    cS += gServe;
+
+    // Point score per game
+    let gPts = 0;
+    g.points.forEach(p => {
+      if (p.outcome === 'IE')      gPts += 2;
+      else if (p.outcome === 'OE') gPts -= 2;
+      else if (p.outcome === 'IM') gPts -= 1;
+      else if (p.outcome === 'OM') gPts += 1;
+    });
+    cP += gPts;
+
+    composure.push(cC);
+    intensity.push(cI);
+    serve.push(cS);
+    points.push(cP);
+  });
+
+  return { composure, intensity, serve, points };
+}
+
+function drawChart(svgId, data, color) {
+  const svg = document.getElementById(svgId);
+  if (!svg || data.length === 0) return;
+  svg.innerHTML = '';
+
+  const W = svg.parentElement.clientWidth || 280;
+  const H = 80;
+  const pad = { l: 28, r: 8, t: 8, b: 8 };
+  const iW = W - pad.l - pad.r;
+  const iH = H - pad.t - pad.b;
+
+  // Include 0 in range
+  const allVals = [0, ...data];
+  const minV = Math.min(...allVals);
+  const maxV = Math.max(...allVals);
+  const range = maxV - minV || 1;
+
+  const toX = i => pad.l + (i / Math.max(data.length - 1, 1)) * iW;
+  const toY = v => pad.t + (1 - (v - minV) / range) * iH;
+
+  // Zero line
+  const zeroY = toY(0);
+  const zeroLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+  zeroLine.setAttribute('x1', pad.l); zeroLine.setAttribute('x2', pad.l + iW);
+  zeroLine.setAttribute('y1', zeroY); zeroLine.setAttribute('y2', zeroY);
+  zeroLine.setAttribute('stroke', '#e0d8cc'); zeroLine.setAttribute('stroke-width','1');
+  zeroLine.setAttribute('stroke-dasharray','3,3');
+  svg.appendChild(zeroLine);
+
+  // Y axis label for zero
+  const zLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  zLabel.setAttribute('x', pad.l - 4); zLabel.setAttribute('y', zeroY + 4);
+  zLabel.setAttribute('text-anchor','end'); zLabel.setAttribute('fill','#9a8878');
+  zLabel.setAttribute('font-size','9'); zLabel.textContent = '0';
+  svg.appendChild(zLabel);
+
+  if (data.length === 1) {
+    // Single dot
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx', toX(0)); dot.setAttribute('cy', toY(data[0]));
+    dot.setAttribute('r','4'); dot.setAttribute('fill', color);
+    svg.appendChild(dot);
+    return;
+  }
+
+  // Area fill
+  let areaPath = `M${toX(0)},${toY(data[0])}`;
+  for (let i=1; i<data.length; i++) areaPath += ` L${toX(i)},${toY(data[i])}`;
+  areaPath += ` L${toX(data.length-1)},${H} L${toX(0)},${H} Z`;
+  const area = document.createElementNS('http://www.w3.org/2000/svg','path');
+  area.setAttribute('d', areaPath);
+  area.setAttribute('fill', color); area.setAttribute('opacity','0.08');
+  svg.appendChild(area);
+
+  // Line
+  let linePath = `M${toX(0)},${toY(data[0])}`;
+  for (let i=1; i<data.length; i++) linePath += ` L${toX(i)},${toY(data[i])}`;
+  const line = document.createElementNS('http://www.w3.org/2000/svg','path');
+  line.setAttribute('d', linePath);
+  line.setAttribute('fill','none'); line.setAttribute('stroke', color);
+  line.setAttribute('stroke-width','2'); line.setAttribute('stroke-linejoin','round');
+  svg.appendChild(line);
+
+  // Dots + game labels
+  data.forEach((v, i) => {
+    const cx = toX(i), cy = toY(v);
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx', cx); dot.setAttribute('cy', cy);
+    dot.setAttribute('r','3'); dot.setAttribute('fill', color);
+    svg.appendChild(dot);
+
+    // Value label on last point
+    if (i === data.length - 1) {
+      const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+      lbl.setAttribute('x', cx + 5); lbl.setAttribute('y', cy + 4);
+      lbl.setAttribute('fill', color); lbl.setAttribute('font-size','10');
+      lbl.setAttribute('font-weight','700');
+      lbl.textContent = v > 0 ? '+'+v : v;
+      svg.appendChild(lbl);
+    }
+
+    // Game number label on x axis
+    const gLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    gLbl.setAttribute('x', cx); gLbl.setAttribute('y', H);
+    gLbl.setAttribute('text-anchor','middle'); gLbl.setAttribute('fill','#9a8878');
+    gLbl.setAttribute('font-size','8');
+    gLbl.textContent = 'G'+(i+1);
+    svg.appendChild(gLbl);
+  });
+}
+
+function updateValLabel(elId, val) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent = val > 0 ? '+'+val : (val === 0 ? '0' : val);
+  el.className = val > 0 ? 'pos' : val < 0 ? 'neg' : 'zero';
+}
+
+function renderAllCharts(prefix) {
+  if (M.games.length === 0) return;
+  const t = computeTrends(M.games);
+  const last = arr => arr[arr.length-1] || 0;
+
+  drawChart(`${prefix}-composure`, t.composure, '#1a6bc8');
+  drawChart(`${prefix}-intensity`,  t.intensity,  '#c87d1a');
+  drawChart(`${prefix}-serve`,      t.serve,      '#c85a1a');
+  drawChart(`${prefix}-points`,     t.points,     '#1a7a3a');
+
+  updateValLabel(`${prefix}-composure-val`, last(t.composure));
+  updateValLabel(`${prefix}-intensity-val`,  last(t.intensity));
+  updateValLabel(`${prefix}-serve-val`,      last(t.serve));
+  updateValLabel(`${prefix}-points-val`,     last(t.points));
 }
 
 function confirmEndGame() {
@@ -786,6 +1023,12 @@ function confirmEndGame() {
 
   renderAll();
   renderGameLog();
+
+  // Update live charts
+  if (M.games.length > 0) {
+    document.getElementById('live-charts').style.display = 'block';
+    setTimeout(() => renderAllCharts('lc'), 50);
+  }
 }
 
 function checkSetOver() {
@@ -906,12 +1149,14 @@ function renderGameLog() {
     div.className = 'log-entry';
     const wCls   = g.winner === 'isaac' ? 'isaac' : 'opp';
     const wLabel = g.winner === 'isaac' ? 'Isaac' : oppShort;
+    const cLbl = g.composure === 1 ? '+1' : g.composure === -1 ? '−1' : '0';
+    const iLbl = g.intensity === 1 ? '+1' : g.intensity === -1 ? '−1' : '0';
     div.innerHTML = `
       <span class="log-game-num">S${g.setNum} G${g.gameNum}</span>
       <span class="log-score ${wCls}">${wLabel}</span>
       <div class="log-grades">
-        <span class="log-c">C:${g.composure}</span>
-        <span class="log-i">I:${g.intensity}</span>
+        <span class="log-c">C:${cLbl}</span>
+        <span class="log-i">I:${iLbl}</span>
       </div>`;
     log.appendChild(div);
   });
@@ -931,7 +1176,7 @@ function buildSummary() {
   const opp = M.setup.opp;
   const oppShort = opp.split(',')[0];
   document.getElementById('sum-title').textContent = `Isaac ${M.isaacSets}–${M.oppSets} ${oppShort}`;
-  document.getElementById('sum-meta').textContent  = `${M.setup.date} · ${M.setup.level} ${M.setup.round} · ${M.setup.surface}`;
+  document.getElementById('sum-meta').textContent  = `${M.setup.date} · ${M.setup.level} ${M.setup.round} · ${M.setup.surface} · Opp WTN ${M.setup.oppWtn} / UTR ${M.setup.oppUtr}`;
 
   let totalPts=0,isaacPts=0,isaacErrors=0,oppErrors=0;
   let isaacWinners=0,oppWinners=0,serves1=0,serves2=0;
@@ -975,13 +1220,13 @@ function buildSummary() {
     </div>
     <div class="stat-card">
       <div class="stat-label">Avg Composure</div>
-      <div class="stat-val" style="color:var(--accent2)">${avgC}</div>
-      <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${avgC/5*100}%;background:var(--accent2)"></div></div><span class="bar-pct">/5</span></div>
+      <div class="stat-val" style="color:#1a6bc8">${avgC}</div>
+      <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${Math.max(0,(parseFloat(avgC)+1)/2*100)}%;background:#1a6bc8"></div></div><span class="bar-pct">${avgC}</span></div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Avg Intensity</div>
-      <div class="stat-val" style="color:var(--warn)">${avgI}</div>
-      <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${avgI/5*100}%;background:var(--warn)"></div></div><span class="bar-pct">/5</span></div>
+      <div class="stat-val" style="color:#c87d1a">${avgI}</div>
+      <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${Math.max(0,(parseFloat(avgI)+1)/2*100)}%;background:#c87d1a"></div></div><span class="bar-pct">${avgI}</span></div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Isaac Errors</div>
@@ -1016,13 +1261,18 @@ function buildSummary() {
     div.className = 'gbg-row';
     const wCls = g.winner==='isaac' ? 'isaac' : 'opp';
     const wLbl = g.winner==='isaac' ? 'Isaac' : oppShort;
+    const cLbl = g.composure === 1 ? '+1' : g.composure === -1 ? '−1' : '0';
+    const iLbl = g.intensity === 1 ? '+1' : g.intensity === -1 ? '−1' : '0';
     div.innerHTML = `
       <span class="gbg-game">S${g.setNum} G${g.gameNum}</span>
       <span class="gbg-winner ${wCls}">${wLbl}${g.leadDisengaged?' ⚑':''}</span>
-      <span class="gbg-c">C${g.composure}</span>
-      <span class="gbg-i">I${g.intensity}</span>`;
+      <span class="gbg-c">C${cLbl}</span>
+      <span class="gbg-i">I${iLbl}</span>`;
     gbg.appendChild(div);
   });
+
+  // Render summary charts after DOM settles
+  setTimeout(() => renderAllCharts('sc'), 100);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1055,6 +1305,7 @@ function buildPayload() {
   return {
     date: M.setup.date, level: M.setup.level, round: M.setup.round,
     surface: M.setup.surface, opp: M.setup.opp,
+    oppWtn: M.setup.oppWtn, oppUtr: M.setup.oppUtr,
     isaacSets: M.isaacSets, oppSets: M.oppSets,
     totalGames: M.games.length, isaacGamesWon,
     totalPoints: totalPts, isaacPoints: isaacPts,
@@ -1176,6 +1427,8 @@ function showToast(msg) {
 function newMatch() {
   M = freshMatch();
   document.getElementById('opp-name').value = '';
+  document.getElementById('opp-wtn').value = '';
+  document.getElementById('opp-utr').value = '';
   document.getElementById('point-strip').innerHTML = '';
   document.getElementById('game-log').innerHTML = '';
   document.getElementById('game-log-section').style.display = 'none';
