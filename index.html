@@ -359,6 +359,21 @@
         <button class="toggle-btn" id="sf-opp" onclick="setServeFirst('opp')">Opponent</button>
       </div>
     </div>
+    <div>
+      <label>Match Format</label>
+      <select id="match-format">
+        <option value="standard">Standard (3rd set = 10pt tiebreak)</option>
+        <option value="full3rd">Full 3rd Set</option>
+        <option value="short">Short Sets (first to 4)</option>
+      </select>
+    </div>
+    <div>
+      <label>Scoring</label>
+      <div class="toggle-row">
+        <button class="toggle-btn on-isaac" id="scoring-ad" onclick="setScoring('ad')">Ad Scoring</button>
+        <button class="toggle-btn" id="scoring-noad" onclick="setScoring('noad')">No-Ad</button>
+      </div>
+    </div>
   </div>
   <button class="btn-primary" onclick="startMatch()">Start Match →</button>
   <div id="past-section" style="display:none;">
@@ -615,31 +630,34 @@ function freshMatch() {
     setup: {},
     isaacSets: 0, oppSets: 0,
     currentSet: 1,
-    setHistory: [],          // [{isaac, opp}]
-    isaacGames: 0, oppGames: 0,   // games in current set
+    setHistory: [],
+    isaacGames: 0, oppGames: 0,
     currentServer: 'isaac',
     firstServer: 'isaac',
+    format: 'standard',  // 'standard'|'full3rd'|'short'
+    noAd: false,
     // Current game
     game: {
       number: 1,
       server: 'isaac',
-      isaacRawPts: 0,   // raw points (for deuce logic)
+      isaacRawPts: 0,
       oppRawPts: 0,
       deuce: false,
-      adServer: null,   // 'isaac' | 'opp' | null
-      points: [],       // logged point objects
+      adServer: null,
+      isTiebreak: false,   // true when playing a tiebreak
+      tbTarget: 7,         // 7 for set tb, 10 for match tb
+      points: [],
       composure: null,
       intensity: null
     },
-    // Current point being built
     point: {
-      serve: 1,          // 1 or 2
-      serveResult: null, // 'in','fault','df','ace'
-      returnResult: null,// 'in','miss'
-      outcome: null      // 'IE','OE','IM','OM'
+      serve: 1,
+      serveResult: null,
+      returnResult: null,
+      outcome: null
     },
-    games: [],           // completed game records
-    step: 'serve-isaac'  // 'serve-isaac'|'serve-opp'|'outcome'|'grades'
+    games: [],
+    step: 'serve-isaac'
   };
 }
 
@@ -650,6 +668,12 @@ function setServeFirst(who) {
   M.firstServer = who;
   document.getElementById('sf-isaac').className = 'toggle-btn' + (who==='isaac' ? ' on-isaac' : '');
   document.getElementById('sf-opp').className   = 'toggle-btn' + (who==='opp'   ? ' on-opp'   : '');
+}
+
+function setScoring(mode) {
+  M.noAd = (mode === 'noad');
+  document.getElementById('scoring-ad').className   = 'toggle-btn' + (mode==='ad'   ? ' on-isaac' : '');
+  document.getElementById('scoring-noad').className = 'toggle-btn' + (mode==='noad' ? ' on-opp'   : '');
 }
 
 function startMatch() {
@@ -663,7 +687,10 @@ function startMatch() {
     level:   document.getElementById('match-level').value,
     round:   document.getElementById('match-round').value,
     surface: document.getElementById('match-surface').value,
+    format:  document.getElementById('match-format').value,
+    noAd:    M.noAd,
   };
+  M.format = M.setup.format;
   M.currentServer = M.firstServer;
   M.game.server   = M.currentServer;
   M.step = M.currentServer === 'isaac' ? 'serve-isaac' : 'serve-opp';
@@ -730,58 +757,75 @@ function onOutcome(code) {
 }
 
 // ═══════════════════════════════════════════════════════
-// CORE: LOG POINT
+// CORE: LOG POINT — handles all formats
 // ═══════════════════════════════════════════════════════
 function logPoint(isaacWins) {
-  // Save point record
   const p = {
     serve:        M.point.serve,
     server:       M.currentServer,
     serveResult:  M.point.serveResult,
     returnResult: M.point.returnResult,
-    outcome:      M.point.outcome
+    outcome:      M.point.outcome,
+    isTiebreak:   M.game.isTiebreak
   };
   M.game.points.push(p);
-
-  // Dot
   addDot(isaacWins ? 'iw' : 'ow');
 
-  // Score logic
   const g = M.game;
   if (isaacWins) g.isaacRawPts++; else g.oppRawPts++;
 
-  // Deuce / ad logic
   const iP = g.isaacRawPts, oP = g.oppRawPts;
   let gameOver = false, gameWinner = null;
 
-  if (iP >= 3 && oP >= 3) {
-    // Deuce territory
-    if (iP === oP) {
-      g.deuce = true; g.adServer = null;
-    } else {
-      const diff = iP - oP;
-      if (Math.abs(diff) === 1) {
-        g.deuce = true;
-        g.adServer = diff > 0 ? 'isaac' : 'opp';
-      } else if (Math.abs(diff) >= 2) {
+  if (g.isTiebreak) {
+    // ── TIEBREAK SCORING ──
+    const target = g.tbTarget; // 7 or 10
+    if (iP >= target && iP - oP >= 2) { gameOver = true; gameWinner = 'isaac'; }
+    else if (oP >= target && oP - iP >= 2) { gameOver = true; gameWinner = 'opp'; }
+  } else {
+    // ── REGULAR GAME SCORING ──
+    if (M.noAd) {
+      // No-Ad: deuce = one deciding point
+      if (iP >= 3 && oP >= 3) {
+        // Already at deuce — next point wins
         gameOver = true;
-        gameWinner = diff > 0 ? 'isaac' : 'opp';
+        gameWinner = isaacWins ? 'isaac' : 'opp';
+        g.deuce = true;
+      } else {
+        if (iP >= 4) { gameOver = true; gameWinner = 'isaac'; }
+        else if (oP >= 4) { gameOver = true; gameWinner = 'opp'; }
+      }
+    } else {
+      // Ad scoring
+      if (iP >= 3 && oP >= 3) {
+        if (iP === oP) { g.deuce = true; g.adServer = null; }
+        else {
+          const diff = iP - oP;
+          if (Math.abs(diff) === 1) { g.deuce = true; g.adServer = diff > 0 ? 'isaac' : 'opp'; }
+          else if (Math.abs(diff) >= 2) { gameOver = true; gameWinner = diff > 0 ? 'isaac' : 'opp'; }
+        }
+      } else {
+        if (iP >= 4) { gameOver = true; gameWinner = 'isaac'; }
+        else if (oP >= 4) { gameOver = true; gameWinner = 'opp'; }
       }
     }
-  } else {
-    if (iP >= 4) { gameOver = true; gameWinner = 'isaac'; }
-    else if (oP >= 4) { gameOver = true; gameWinner = 'opp'; }
   }
 
   if (gameOver) {
+    g.winner = gameWinner;
     renderScoreDisplay();
-    // Show grades step
     M.step = 'grades';
     renderSteps();
     showToast(gameWinner === 'isaac' ? 'Game Isaac ✓' : 'Game Opponent');
   } else {
-    // Reset to serve/return step for next point
     resetPointState();
+    // In tiebreak, server switches every 2 points (after first point then every 2)
+    if (g.isTiebreak) {
+      const totalPts = iP + oP;
+      if (totalPts > 0 && totalPts % 2 === 1) {
+        M.currentServer = M.currentServer === 'isaac' ? 'opp' : 'isaac';
+      }
+    }
     M.step = M.currentServer === 'isaac' ? 'serve-isaac' : 'serve-opp';
     renderAll();
   }
@@ -789,6 +833,83 @@ function logPoint(isaacWins) {
 
 function resetPointState() {
   M.point = { serve: 1, serveResult: null, returnResult: null, outcome: null };
+}
+
+// ─── Helper: should next game be a tiebreak? ───
+function shouldStartTiebreak() {
+  const i = M.isaacGames, o = M.oppGames;
+  const fmt = M.format;
+  const setNum = M.currentSet;
+
+  if (fmt === 'short') {
+    // Short sets: 4-4 → 7pt tiebreak
+    return i === 4 && o === 4;
+  }
+  if (fmt === 'standard') {
+    if (setNum <= 2) return i === 6 && o === 6; // 7pt tb
+    if (setNum === 3) return i === 0 && o === 0 && M.isaacSets === 1 && M.oppSets === 1;
+    // Set 3 begins as 10pt match tiebreak immediately
+  }
+  if (fmt === 'full3rd') {
+    return i === 6 && o === 6; // always 7pt tb
+  }
+  return false;
+}
+
+function getTbTarget() {
+  const fmt = M.format;
+  const setNum = M.currentSet;
+  if (fmt === 'standard' && setNum === 3) return 10;
+  return 7;
+}
+
+function checkSetOver() {
+  const i = M.isaacGames, o = M.oppGames;
+  const fmt = M.format;
+  let setDone = false, setWinner = null;
+
+  if (fmt === 'short') {
+    if ((i >= 4 && i - o >= 2) || i === 5) { setDone = true; setWinner = 'isaac'; }
+    else if ((o >= 4 && o - i >= 2) || o === 5) { setDone = true; setWinner = 'opp'; }
+  } else {
+    // Standard or full3rd — same set logic for sets 1 & 2
+    if ((i >= 6 && i - o >= 2) || i === 7) { setDone = true; setWinner = 'isaac'; }
+    else if ((o >= 6 && o - i >= 2) || o === 7) { setDone = true; setWinner = 'opp'; }
+  }
+
+  if (setDone) {
+    M.setHistory.push({ isaac: M.isaacGames, opp: M.oppGames });
+    if (setWinner === 'isaac') M.isaacSets++; else M.oppSets++;
+    M.isaacGames = 0; M.oppGames = 0;
+    M.currentSet++;
+    document.getElementById('hdr-isaac-sets').textContent = M.isaacSets;
+    document.getElementById('hdr-opp-sets').textContent   = M.oppSets;
+  }
+}
+
+// ─── Start next game — check if tiebreak ───
+function startNextGame() {
+  const fmt = M.format;
+  const setNum = M.currentSet;
+  let isTb = false;
+  let tbTarget = 7;
+
+  // Standard format: set 3 is entirely a match tiebreak
+  if (fmt === 'standard' && setNum === 3 && M.isaacSets === 1 && M.oppSets === 1) {
+    isTb = true; tbTarget = 10;
+  } else if (shouldStartTiebreak()) {
+    isTb = true; tbTarget = getTbTarget();
+  }
+
+  M.game = {
+    number: M.games.length + 1,
+    server: M.currentServer,
+    isaacRawPts: 0, oppRawPts: 0,
+    deuce: false, adServer: null,
+    isTiebreak: isTb,
+    tbTarget,
+    points: [], composure: null, intensity: null
+  };
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1003,17 +1124,17 @@ function confirmEndGame() {
   // Check set over
   checkSetOver();
 
-  // Alternate server
-  M.currentServer = M.currentServer === 'isaac' ? 'opp' : 'isaac';
+  // Alternate server (not in tiebreak — server already managed per point)
+  if (!M.game.isTiebreak) {
+    M.currentServer = M.currentServer === 'isaac' ? 'opp' : 'isaac';
+  } else {
+    // After tiebreak, server is whoever receives in the tiebreak's last point
+    // Convention: server after tiebreak alternates from who served first in tb
+    M.currentServer = M.game.server === 'isaac' ? 'opp' : 'isaac';
+  }
 
-  // New game
-  M.game = {
-    number: M.games.length + 1,
-    server: M.currentServer,
-    isaacRawPts: 0, oppRawPts: 0,
-    deuce: false, adServer: null,
-    points: [], composure: null, intensity: null
-  };
+  // Start next game (checks tiebreak conditions)
+  startNextGame();
   resetPointState();
   M.step = M.currentServer === 'isaac' ? 'serve-isaac' : 'serve-opp';
 
@@ -1064,15 +1185,22 @@ function renderAll() {
 function renderHeader() {
   document.getElementById('hdr-isaac-sets').textContent = M.isaacSets;
   document.getElementById('hdr-opp-sets').textContent   = M.oppSets;
-  document.getElementById('gc-set').textContent  = 'SET ' + M.currentSet;
-  document.getElementById('gc-game').textContent = `Game ${M.game.number} · ${M.isaacGames}–${M.oppGames}`;
+  const tbLabel = M.game.isTiebreak ? ` · TB to ${M.game.tbTarget}` : '';
+  document.getElementById('gc-set').textContent  = 'SET ' + M.currentSet + (M.game.isTiebreak && M.format==='standard' && M.currentSet===3 ? ' · MATCH TB' : '');
+  document.getElementById('gc-game').textContent = M.game.isTiebreak
+    ? `Tiebreak · ${M.isaacGames}–${M.oppGames}`
+    : `Game ${M.game.number} · ${M.isaacGames}–${M.oppGames}`;
 }
 
 function renderScoreDisplay() {
   const g = M.game;
   let iLabel, oLabel;
 
-  if (g.deuce) {
+  if (g.isTiebreak) {
+    // Show raw tiebreak counts
+    iLabel = String(g.isaacRawPts);
+    oLabel = String(g.oppRawPts);
+  } else if (g.deuce) {
     if (!g.adServer) {
       iLabel = 'DEUCE'; oLabel = 'DEUCE';
     } else if (g.adServer === 'isaac') {
@@ -1306,6 +1434,7 @@ function buildPayload() {
     date: M.setup.date, level: M.setup.level, round: M.setup.round,
     surface: M.setup.surface, opp: M.setup.opp,
     oppWtn: M.setup.oppWtn, oppUtr: M.setup.oppUtr,
+    format: M.setup.format, noAd: M.setup.noAd,
     isaacSets: M.isaacSets, oppSets: M.oppSets,
     totalGames: M.games.length, isaacGamesWon,
     totalPoints: totalPts, isaacPoints: isaacPts,
@@ -1429,6 +1558,8 @@ function newMatch() {
   document.getElementById('opp-name').value = '';
   document.getElementById('opp-wtn').value = '';
   document.getElementById('opp-utr').value = '';
+  document.getElementById('scoring-ad').className = 'toggle-btn on-isaac';
+  document.getElementById('scoring-noad').className = 'toggle-btn';
   document.getElementById('point-strip').innerHTML = '';
   document.getElementById('game-log').innerHTML = '';
   document.getElementById('game-log-section').style.display = 'none';
@@ -1449,6 +1580,8 @@ function endMatch() {
 // ═══════════════════════════════════════════════════════
 M = freshMatch();
 document.getElementById('match-date').value = new Date().toISOString().split('T')[0];
+document.getElementById('scoring-ad').className = 'toggle-btn on-isaac';
+document.getElementById('scoring-noad').className = 'toggle-btn';
 loadPastMatches();
 </script>
 </body>
