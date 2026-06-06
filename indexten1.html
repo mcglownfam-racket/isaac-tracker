@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Isaac Match Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: #2a2a3a;
+    --accent: #c8f135;
+    --accent2: #35c8f1;
+    --warn: #f1a035;
+    --danger: #f13535;
+    --text: #e8e8f0;
+    --muted: #5a5a78;
+    --isaac: #c8f135;
+    --opp: #f13535;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .screen { display: none; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ── SETUP ── */
+  #setup { padding: 24px 20px; gap: 18px; overflow-y: auto; }
+
+  .logo { font-size: 11px; font-family: 'DM Mono', monospace; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
+  .logo span { color: var(--accent); }
+  h1 { font-size: 40px; font-weight: 800; line-height: 0.95; letter-spacing: -0.02em; margin-top: 6px; }
+  h1 em { color: var(--accent); font-style: normal; }
+
+  .setup-fields { display: flex; flex-direction: column; gap: 14px; }
+  label { font-size: 11px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; display: block; margin-bottom: 6px; }
+  input[type="text"], input[type="date"], select {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px; font-weight: 600; padding: 12px 14px; outline: none; transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--surface2); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .toggle-row { display: flex; gap: 8px; }
+  .toggle-btn {
+    flex: 1; background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 8px; color: var(--muted); font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px; font-weight: 700; padding: 12px; cursor: pointer; text-align: center;
+    transition: all 0.12s; text-transform: uppercase;
+  }
+  .toggle-btn.on-isaac { background: rgba(200,241,53,0.15); border-color: var(--isaac); color: var(--isaac); }
+  .toggle-btn.on-opp   { background: rgba(241,53,53,0.15);  border-color: var(--opp);   color: var(--opp); }
+
+  .btn-primary {
+    background: var(--accent); color: #0a0a0f; border: none; border-radius: 10px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800;
+    letter-spacing: 0.05em; padding: 16px; width: 100%; cursor: pointer;
+    transition: transform 0.1s, opacity 0.1s; text-transform: uppercase;
+  }
+  .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+
+  /* ── MATCH HEADER ── */
+  .match-header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 10px 16px; display: flex; align-items: center;
+    justify-content: space-between; position: sticky; top: 0; z-index: 10;
+  }
+
+  .scoreboard { display: flex; align-items: center; gap: 10px; }
+  .sb-player { text-align: center; }
+  .sb-name { font-size: 9px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; }
+  .sb-sets { font-size: 30px; font-weight: 800; line-height: 1; }
+  .sb-sets.isaac { color: var(--accent); }
+  .sb-sets.opp   { color: var(--opp); }
+  .sb-div { color: var(--border); font-size: 22px; }
+
+  .game-context { text-align: right; }
+  .gc-set { font-size: 13px; font-weight: 700; color: var(--accent2); letter-spacing: 0.06em; }
+  .gc-game { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+  /* ── MATCH BODY ── */
+  .match-body { flex: 1; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+
+  /* ── SCORE DISPLAY ── */
+  .score-display {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px; display: flex; flex-direction: column; gap: 8px;
+  }
+
+  .score-row { display: flex; align-items: center; justify-content: space-between; }
+
+  .score-server-pip {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    display: inline-block; margin-right: 6px; opacity: 0;
+  }
+  .score-server-pip.visible { opacity: 1; }
+
+  .score-player-name { font-size: 15px; font-weight: 700; letter-spacing: 0.04em; }
+  .score-game-score { font-size: 32px; font-weight: 800; line-height: 1; min-width: 60px; text-align: right; }
+  .score-game-score.isaac { color: var(--accent); }
+  .score-game-score.opp   { color: var(--opp); }
+
+  .score-set-history { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+
+  /* serve context bar */
+  .serve-context {
+    background: var(--surface2); border-radius: 8px; padding: 8px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .sc-left { font-size: 13px; font-weight: 700; }
+  .sc-left em { font-style: normal; }
+  .sc-left em.serving { color: var(--accent2); }
+  .sc-left em.returning { color: var(--warn); }
+  .sc-serve-num {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 4px; padding: 3px 8px; color: var(--muted);
+  }
+  .sc-serve-num.second { border-color: var(--warn); color: var(--warn); }
+
+  /* ── STEP LABEL ── */
+  .step-label {
+    font-size: 11px; letter-spacing: 0.15em; color: var(--muted);
+    text-transform: uppercase; font-family: 'DM Mono', monospace;
+  }
+
+  /* ── SERVE BUTTONS (step 1 when serving) ── */
+  .serve-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .serve-btns.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  .action-btn {
+    border: 1.5px solid var(--border); border-radius: 12px;
+    background: var(--surface); cursor: pointer; padding: 16px 10px;
+    text-align: center; transition: all 0.12s;
+    display: flex; flex-direction: column; gap: 4px; align-items: center;
+  }
+  .action-btn:active { transform: scale(0.95); }
+  .action-btn .ab-icon { font-size: 24px; line-height: 1; }
+  .action-btn .ab-label { font-size: 15px; font-weight: 700; letter-spacing: 0.03em; color: var(--text); }
+  .action-btn .ab-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+
+  .action-btn.col-green  { border-color: var(--isaac); }
+  .action-btn.col-red    { border-color: var(--opp); }
+  .action-btn.col-blue   { border-color: var(--accent2); }
+  .action-btn.col-yellow { border-color: var(--warn); }
+  .action-btn.col-danger { border-color: var(--danger); }
+
+  .action-btn.col-green:active  { background: rgba(200,241,53,0.15); }
+  .action-btn.col-red:active    { background: rgba(241,53,53,0.15); }
+  .action-btn.col-blue:active   { background: rgba(53,200,241,0.15); }
+  .action-btn.col-yellow:active { background: rgba(241,160,53,0.15); }
+  .action-btn.col-danger:active { background: rgba(241,53,53,0.2); }
+
+  /* ── OUTCOME BUTTONS (step 2) ── */
+  .outcome-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* ── GRADE SECTION ── */
+  .grade-section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 14px;
+  }
+  .grade-row { display: flex; flex-direction: column; gap: 8px; }
+  .grade-label { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .grade-label span { font-size: 10px; font-weight: 400; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 0.04em; text-transform: none; margin-left: 6px; }
+  .grade-buttons { display: flex; gap: 6px; }
+  .grade-btn {
+    flex: 1; border: 1.5px solid var(--border); border-radius: 8px;
+    background: var(--surface2); color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 800;
+    padding: 11px 4px; cursor: pointer; transition: all 0.12s; text-align: center;
+  }
+  .grade-btn:active { transform: scale(0.95); }
+  .grade-btn.sel-1 { background: rgba(241,53,53,0.2);   border-color: var(--danger); color: var(--danger); }
+  .grade-btn.sel-2 { background: rgba(241,160,53,0.2);  border-color: var(--warn);   color: var(--warn); }
+  .grade-btn.sel-3 { background: rgba(100,100,160,0.3); border-color: #6464a0;        color: #9090d0; }
+  .grade-btn.sel-4 { background: rgba(200,241,53,0.12); border-color: var(--accent);  color: var(--accent); }
+  .grade-btn.sel-5 { background: rgba(200,241,53,0.28); border-color: var(--accent);  color: var(--accent); }
+
+  .end-game-btn {
+    background: var(--surface2); border: 1.5px solid var(--accent2); border-radius: 10px;
+    color: var(--accent2); font-family: 'Barlow Condensed', sans-serif; font-size: 16px;
+    font-weight: 700; letter-spacing: 0.08em; padding: 14px; width: 100%;
+    cursor: pointer; text-transform: uppercase; transition: all 0.12s;
+  }
+  .end-game-btn:active { background: rgba(53,200,241,0.15); }
+
+  /* ── GAME LOG ── */
+  .game-log { display: flex; flex-direction: column; gap: 6px; }
+  .log-entry {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; font-size: 13px;
+  }
+  .log-game-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); min-width: 56px; }
+  .log-score { font-weight: 700; font-size: 15px; }
+  .log-score.isaac { color: var(--accent); }
+  .log-score.opp   { color: var(--opp); }
+  .log-grades { display: flex; gap: 8px; font-family: 'DM Mono', monospace; font-size: 11px; }
+  .log-c { color: var(--accent2); }
+  .log-i { color: var(--warn); }
+
+  /* ── POINT HISTORY DOTS ── */
+  .point-strip { display: flex; flex-wrap: wrap; gap: 4px; min-height: 14px; }
+  .point-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .point-dot.iw { background: var(--accent); }
+  .point-dot.ow { background: var(--opp); }
+
+  /* ── SUMMARY ── */
+  #summary { padding: 24px 20px; gap: 20px; overflow-y: auto; }
+  .summary-header { border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+  .summary-header h2 { font-size: 32px; font-weight: 800; letter-spacing: -0.01em; }
+  .summary-header .meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+  .stat-card.full { grid-column: 1 / -1; }
+  .stat-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .stat-val { font-size: 28px; font-weight: 800; color: var(--accent); }
+  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .bar-wrap { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .bar-bg { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width 0.5s ease; }
+  .bar-pct { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); min-width: 36px; text-align: right; }
+
+  .gbg-row {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; display: grid; grid-template-columns: 60px 1fr 40px 40px;
+    gap: 8px; align-items: center;
+  }
+  .gbg-game { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .gbg-winner { font-weight: 700; font-size: 13px; }
+  .gbg-winner.isaac { color: var(--accent); }
+  .gbg-winner.opp   { color: var(--opp); }
+  .gbg-c { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent2); text-align: center; }
+  .gbg-i { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--warn); text-align: center; }
+
+  .action-row { display: flex; gap: 10px; }
+  .btn-secondary {
+    flex: 1; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
+    color: var(--text); font-family: 'Barlow Condensed', sans-serif; font-size: 16px;
+    font-weight: 700; letter-spacing: 0.06em; padding: 14px; cursor: pointer;
+    text-transform: uppercase; transition: all 0.12s;
+  }
+  .btn-secondary:active { border-color: var(--accent); color: var(--accent); }
+
+  /* ── PAST MATCHES ── */
+  .section-head { font-size: 11px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; font-family: 'DM Mono', monospace; margin-bottom: 8px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--accent); color: #0a0a0f;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 0.08em; padding: 10px 20px; border-radius: 100px;
+    transition: transform 0.3s ease; z-index: 100; white-space: nowrap; text-transform: uppercase;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ SETUP ═══ -->
+<div id="setup" class="screen active">
+  <div>
+    <div class="logo">Isaac <span>//</span> Match Tracker</div>
+    <h1>New<br><em>Match</em></h1>
+  </div>
+  <div class="setup-fields">
+    <div>
+      <label>Opponent Name</label>
+      <input type="text" id="opp-name" placeholder="Last, First" autocomplete="off">
+    </div>
+    <div class="row2">
+      <div>
+        <label>Date</label>
+        <input type="date" id="match-date">
+      </div>
+      <div>
+        <label>Level</label>
+        <select id="match-level">
+          <option value="L5">L5</option>
+          <option value="L6">L6</option>
+          <option value="L7">L7</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div>
+        <label>Round</label>
+        <select id="match-round">
+          <option value="R1">R1 / R32</option>
+          <option value="R16">R16</option>
+          <option value="QF">Quarterfinal</option>
+          <option value="SF">Semifinal</option>
+          <option value="F">Final</option>
+        </select>
+      </div>
+      <div>
+        <label>Surface</label>
+        <select id="match-surface">
+          <option value="Hard">Hard</option>
+          <option value="Clay">Clay</option>
+          <option value="Indoor">Indoor</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <label>Who Serves First?</label>
+      <div class="toggle-row">
+        <button class="toggle-btn on-isaac" id="sf-isaac" onclick="setServeFirst('isaac')">Isaac</button>
+        <button class="toggle-btn" id="sf-opp" onclick="setServeFirst('opp')">Opponent</button>
+      </div>
+    </div>
+  </div>
+  <button class="btn-primary" onclick="startMatch()">Start Match →</button>
+  <div id="past-section" style="display:none;">
+    <div class="section-head">Recent Matches</div>
+    <div id="past-list" class="game-log"></div>
+  </div>
+</div>
+
+<!-- ═══ MATCH ═══ -->
+<div id="match" class="screen">
+
+  <div class="match-header">
+    <div class="scoreboard">
+      <div class="sb-player">
+        <div class="sb-name">Isaac</div>
+        <div class="sb-sets isaac" id="hdr-isaac-sets">0</div>
+      </div>
+      <div class="sb-div">—</div>
+      <div class="sb-player">
+        <div class="sb-name" id="hdr-opp-name">Opp</div>
+        <div class="sb-sets opp" id="hdr-opp-sets">0</div>
+      </div>
+    </div>
+    <div class="game-context">
+      <div class="gc-set" id="gc-set">SET 1</div>
+      <div class="gc-game" id="gc-game">Game 1 · 0–0</div>
+    </div>
+  </div>
+
+  <div class="match-body">
+
+    <!-- Score display -->
+    <div class="score-display">
+      <div class="score-row">
+        <div style="display:flex;align-items:center;">
+          <div class="score-server-pip" id="pip-isaac"></div>
+          <div class="score-player-name">Isaac</div>
+        </div>
+        <div class="score-game-score isaac" id="pts-isaac">0</div>
+      </div>
+      <div class="score-row">
+        <div style="display:flex;align-items:center;">
+          <div class="score-server-pip" id="pip-opp"></div>
+          <div class="score-player-name" id="pts-opp-name">Opponent</div>
+        </div>
+        <div class="score-game-score opp" id="pts-opp">0</div>
+      </div>
+      <div class="score-row" style="margin-top:4px;padding-top:8px;border-top:1px solid var(--border);">
+        <div class="score-set-history" id="set-history">—</div>
+        <div class="score-set-history" id="game-score-in-set">0 – 0</div>
+      </div>
+    </div>
+
+    <!-- Serve context -->
+    <div class="serve-context" id="serve-context">
+      <div class="sc-left">Isaac is <em id="sc-role" class="serving">Serving</em></div>
+      <div class="sc-serve-num" id="sc-serve-num">1st Serve</div>
+    </div>
+
+    <!-- Point dots -->
+    <div class="point-strip" id="point-strip"></div>
+
+    <!-- ── STEP 1: SERVE OUTCOME (when Isaac serving) ── -->
+    <div id="step-serve">
+      <div class="step-label" style="margin-bottom:8px;" id="step-serve-label">Serve Outcome</div>
+      <div class="serve-btns three">
+        <button class="action-btn col-blue" onclick="onServeResult('in')">
+          <div class="ab-icon">✅</div>
+          <div class="ab-label">In</div>
+          <div class="ab-sub">Play on</div>
+        </button>
+        <button class="action-btn col-yellow" onclick="onServeResult('fault')">
+          <div class="ab-icon">⚠️</div>
+          <div class="ab-label">Fault</div>
+          <div class="ab-sub">2nd serve</div>
+        </button>
+        <button class="action-btn col-danger" onclick="onServeResult('df')">
+          <div class="ab-icon">✖️</div>
+          <div class="ab-label">Dbl Fault</div>
+          <div class="ab-sub">Point lost</div>
+        </button>
+      </div>
+      <!-- Ace as special in-serve outcome -->
+      <div style="margin-top:10px;">
+        <button class="action-btn col-green" style="width:100%;flex-direction:row;gap:12px;padding:12px 16px;" onclick="onServeResult('ace')">
+          <div class="ab-icon">🔥</div>
+          <div style="text-align:left;">
+            <div class="ab-label">Ace</div>
+            <div class="ab-sub">Point won — skip to next serve</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STEP 1b: RETURN OUTCOME (when Isaac returning) ── -->
+    <div id="step-return" style="display:none;">
+      <div class="step-label" style="margin-bottom:8px;">Return Result</div>
+      <div class="serve-btns">
+        <button class="action-btn col-blue" onclick="onReturnResult('in')">
+          <div class="ab-icon">🎾</div>
+          <div class="ab-label">Return In</div>
+          <div class="ab-sub">Rally on</div>
+        </button>
+        <button class="action-btn col-danger" onclick="onReturnResult('miss')">
+          <div class="ab-icon">✖️</div>
+          <div class="ab-label">Return Miss</div>
+          <div class="ab-sub">Point lost</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: POINT OUTCOME (after serve/return is in) ── -->
+    <div id="step-outcome" style="display:none;">
+      <div class="step-label" style="margin-bottom:8px;">Point Outcome</div>
+      <div class="outcome-btns">
+        <button class="action-btn col-green" onclick="onOutcome('IE')">
+          <div class="ab-icon">🎯</div>
+          <div class="ab-label">Isaac Earns</div>
+          <div class="ab-sub">Winner / Force</div>
+        </button>
+        <button class="action-btn col-red" onclick="onOutcome('OE')">
+          <div class="ab-icon">💥</div>
+          <div class="ab-label">Opp Earns</div>
+          <div class="ab-sub">Winner / Force</div>
+        </button>
+        <button class="action-btn col-red" onclick="onOutcome('IM')">
+          <div class="ab-icon">⚡</div>
+          <div class="ab-label">Isaac Error</div>
+          <div class="ab-sub">Unforced</div>
+        </button>
+        <button class="action-btn col-green" onclick="onOutcome('OM')">
+          <div class="ab-icon">🌀</div>
+          <div class="ab-label">Opp Error</div>
+          <div class="ab-sub">Unforced</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── GRADES (end of each game) ── -->
+    <div id="step-grades" style="display:none;">
+      <div class="grade-section">
+        <div class="step-label">End-of-Game Grades</div>
+        <div class="grade-row">
+          <div class="grade-label">Composure <span>Measured · Controlled · Present</span></div>
+          <div class="grade-buttons">
+            <button class="grade-btn" data-type="composure" data-val="1" onclick="setGrade('composure',1)">1</button>
+            <button class="grade-btn" data-type="composure" data-val="2" onclick="setGrade('composure',2)">2</button>
+            <button class="grade-btn" data-type="composure" data-val="3" onclick="setGrade('composure',3)">3</button>
+            <button class="grade-btn" data-type="composure" data-val="4" onclick="setGrade('composure',4)">4</button>
+            <button class="grade-btn" data-type="composure" data-val="5" onclick="setGrade('composure',5)">5</button>
+          </div>
+        </div>
+        <div class="grade-row">
+          <div class="grade-label">Intensity <span>Active · Focused · Physical energy</span></div>
+          <div class="grade-buttons">
+            <button class="grade-btn" data-type="intensity" data-val="1" onclick="setGrade('intensity',1)">1</button>
+            <button class="grade-btn" data-type="intensity" data-val="2" onclick="setGrade('intensity',2)">2</button>
+            <button class="grade-btn" data-type="intensity" data-val="3" onclick="setGrade('intensity',3)">3</button>
+            <button class="grade-btn" data-type="intensity" data-val="4" onclick="setGrade('intensity',4)">4</button>
+            <button class="grade-btn" data-type="intensity" data-val="5" onclick="setGrade('intensity',5)">5</button>
+          </div>
+        </div>
+        <button class="end-game-btn" onclick="confirmEndGame()">Confirm Game → Next</button>
+      </div>
+    </div>
+
+    <!-- Game log -->
+    <div id="game-log-section" style="display:none;">
+      <div class="section-head">Games Logged</div>
+      <div class="game-log" id="game-log"></div>
+    </div>
+
+    <button class="btn-primary" onclick="endMatch()">End Match → Summary</button>
+
+  </div>
+</div>
+
+<!-- ═══ SUMMARY ═══ -->
+<div id="summary" class="screen">
+  <div class="summary-header">
+    <h2 id="sum-title">Match Summary</h2>
+    <div class="meta" id="sum-meta"></div>
+  </div>
+  <div class="stat-grid" id="stat-grid"></div>
+  <div>
+    <div class="section-head" style="margin-bottom:8px;">Game-by-Game</div>
+    <div style="display:flex;flex-direction:column;gap:6px;" id="gbg-list"></div>
+  </div>
+  <div class="action-row">
+    <button class="btn-secondary" onclick="copyReport()">Copy Text</button>
+    <button class="btn-secondary" id="sheets-btn" onclick="exportToSheets()">→ Sheets</button>
+  </div>
+  <div class="action-row">
+    <button class="btn-primary" style="flex:1;" onclick="newMatch()">New Match</button>
+  </div>
+  <div style="text-align:center;margin-top:2px;">
+    <button onclick="resetSheetUrl()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:13px;cursor:pointer;letter-spacing:0.05em;padding:12px 24px;width:100%;">reset sheet url</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const SCORE_LABELS = ['0','15','30','40'];
+
+let M = {}; // match state
+function freshMatch() {
+  return {
+    setup: {},
+    isaacSets: 0, oppSets: 0,
+    currentSet: 1,
+    setHistory: [],          // [{isaac, opp}]
+    isaacGames: 0, oppGames: 0,   // games in current set
+    currentServer: 'isaac',
+    firstServer: 'isaac',
+    // Current game
+    game: {
+      number: 1,
+      server: 'isaac',
+      isaacRawPts: 0,   // raw points (for deuce logic)
+      oppRawPts: 0,
+      deuce: false,
+      adServer: null,   // 'isaac' | 'opp' | null
+      points: [],       // logged point objects
+      composure: null,
+      intensity: null
+    },
+    // Current point being built
+    point: {
+      serve: 1,          // 1 or 2
+      serveResult: null, // 'in','fault','df','ace'
+      returnResult: null,// 'in','miss'
+      outcome: null      // 'IE','OE','IM','OM'
+    },
+    games: [],           // completed game records
+    step: 'serve-isaac'  // 'serve-isaac'|'serve-opp'|'outcome'|'grades'
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+// SETUP
+// ═══════════════════════════════════════════════════════
+function setServeFirst(who) {
+  M.firstServer = who;
+  document.getElementById('sf-isaac').className = 'toggle-btn' + (who==='isaac' ? ' on-isaac' : '');
+  document.getElementById('sf-opp').className   = 'toggle-btn' + (who==='opp'   ? ' on-opp'   : '');
+}
+
+function startMatch() {
+  const opp = document.getElementById('opp-name').value.trim();
+  if (!opp) { showToast('Enter opponent name'); return; }
+  M.setup = {
+    opp,
+    date:    document.getElementById('match-date').value || new Date().toISOString().split('T')[0],
+    level:   document.getElementById('match-level').value,
+    round:   document.getElementById('match-round').value,
+    surface: document.getElementById('match-surface').value,
+  };
+  M.currentServer = M.firstServer;
+  M.game.server   = M.currentServer;
+  M.step = M.currentServer === 'isaac' ? 'serve-isaac' : 'serve-opp';
+  const oppShort = opp.split(',')[0];
+  document.getElementById('hdr-opp-name').textContent  = oppShort;
+  document.getElementById('pts-opp-name').textContent  = oppShort;
+  renderAll();
+  showScreen('match');
+}
+
+// ═══════════════════════════════════════════════════════
+// POINT FLOW — STEP 1a: SERVE (Isaac serving)
+// ═══════════════════════════════════════════════════════
+function onServeResult(result) {
+  M.point.serveResult = result;
+
+  if (result === 'fault') {
+    // Stay on serve step, move to 2nd serve
+    M.point.serve = 2;
+    renderServeContext();
+    renderSteps();
+    return;
+  }
+  if (result === 'df') {
+    // Double fault: opponent wins point, serve=2
+    M.point.serve = 2;
+    M.point.outcome = 'OE'; // opponent earns via DF
+    logPoint(false); // opp wins
+    return;
+  }
+  if (result === 'ace') {
+    M.point.outcome = 'IE';
+    logPoint(true); // isaac wins
+    return;
+  }
+  // 'in' → show outcome buttons
+  M.step = 'outcome';
+  renderSteps();
+}
+
+// ═══════════════════════════════════════════════════════
+// POINT FLOW — STEP 1b: RETURN (Opponent serving)
+// ═══════════════════════════════════════════════════════
+function onReturnResult(result) {
+  M.point.returnResult = result;
+  if (result === 'miss') {
+    // Isaac missed return → opp wins point
+    M.point.outcome = 'OE';
+    logPoint(false);
+    return;
+  }
+  // return in → rally → outcome
+  M.step = 'outcome';
+  renderSteps();
+}
+
+// ═══════════════════════════════════════════════════════
+// POINT FLOW — STEP 2: OUTCOME
+// ═══════════════════════════════════════════════════════
+function onOutcome(code) {
+  M.point.outcome = code;
+  const isaacWins = (code === 'IE' || code === 'OM');
+  logPoint(isaacWins);
+}
+
+// ═══════════════════════════════════════════════════════
+// CORE: LOG POINT
+// ═══════════════════════════════════════════════════════
+function logPoint(isaacWins) {
+  // Save point record
+  const p = {
+    serve:        M.point.serve,
+    server:       M.currentServer,
+    serveResult:  M.point.serveResult,
+    returnResult: M.point.returnResult,
+    outcome:      M.point.outcome
+  };
+  M.game.points.push(p);
+
+  // Dot
+  addDot(isaacWins ? 'iw' : 'ow');
+
+  // Score logic
+  const g = M.game;
+  if (isaacWins) g.isaacRawPts++; else g.oppRawPts++;
+
+  // Deuce / ad logic
+  const iP = g.isaacRawPts, oP = g.oppRawPts;
+  let gameOver = false, gameWinner = null;
+
+  if (iP >= 3 && oP >= 3) {
+    // Deuce territory
+    if (iP === oP) {
+      g.deuce = true; g.adServer = null;
+    } else {
+      const diff = iP - oP;
+      if (Math.abs(diff) === 1) {
+        g.deuce = true;
+        g.adServer = diff > 0 ? 'isaac' : 'opp';
+      } else if (Math.abs(diff) >= 2) {
+        gameOver = true;
+        gameWinner = diff > 0 ? 'isaac' : 'opp';
+      }
+    }
+  } else {
+    if (iP >= 4) { gameOver = true; gameWinner = 'isaac'; }
+    else if (oP >= 4) { gameOver = true; gameWinner = 'opp'; }
+  }
+
+  if (gameOver) {
+    renderScoreDisplay();
+    // Show grades step
+    M.step = 'grades';
+    renderSteps();
+    showToast(gameWinner === 'isaac' ? 'Game Isaac ✓' : 'Game Opponent');
+  } else {
+    // Reset to serve/return step for next point
+    resetPointState();
+    M.step = M.currentServer === 'isaac' ? 'serve-isaac' : 'serve-opp';
+    renderAll();
+  }
+}
+
+function resetPointState() {
+  M.point = { serve: 1, serveResult: null, returnResult: null, outcome: null };
+}
+
+// ═══════════════════════════════════════════════════════
+// GRADES + END GAME
+// ═══════════════════════════════════════════════════════
+function setGrade(type, val) {
+  M.game[type] = val;
+  document.querySelectorAll(`[data-type="${type}"]`).forEach(b => {
+    b.className = 'grade-btn';
+    if (parseInt(b.dataset.val) === val) b.classList.add('sel-' + val);
+  });
+}
+
+function confirmEndGame() {
+  if (M.game.composure === null || M.game.intensity === null) {
+    showToast('Grade composure & intensity first');
+    return;
+  }
+
+  const g = M.game;
+  const isaacWon = g.isaacRawPts > g.oppRawPts;
+  if (isaacWon) M.isaacGames++; else M.oppGames++;
+
+  // Lead-disengagement check: did Isaac lead in points during this game then lose?
+  let led = false;
+  if (!isaacWon) {
+    let iP = 0, oP = 0;
+    g.points.forEach(p => {
+      if (p.outcome==='IE'||p.outcome==='OM') iP++; else oP++;
+      if (iP > oP) led = true;
+    });
+  }
+
+  M.games.push({
+    setNum:     M.currentSet,
+    gameNum:    g.number,
+    server:     g.server,
+    isaacRaw:   g.isaacRawPts,
+    oppRaw:     g.oppRawPts,
+    winner:     isaacWon ? 'isaac' : 'opp',
+    composure:  g.composure,
+    intensity:  g.intensity,
+    points:     [...g.points],
+    leadDisengaged: led,
+    isaacGamesAfter: M.isaacGames,
+    oppGamesAfter:   M.oppGames
+  });
+
+  // Check set over
+  checkSetOver();
+
+  // Alternate server
+  M.currentServer = M.currentServer === 'isaac' ? 'opp' : 'isaac';
+
+  // New game
+  M.game = {
+    number: M.games.length + 1,
+    server: M.currentServer,
+    isaacRawPts: 0, oppRawPts: 0,
+    deuce: false, adServer: null,
+    points: [], composure: null, intensity: null
+  };
+  resetPointState();
+  M.step = M.currentServer === 'isaac' ? 'serve-isaac' : 'serve-opp';
+
+  // Reset grade buttons
+  document.querySelectorAll('.grade-btn').forEach(b => b.className = 'grade-btn');
+  document.getElementById('point-strip').innerHTML = '';
+
+  renderAll();
+  renderGameLog();
+}
+
+function checkSetOver() {
+  const i = M.isaacGames, o = M.oppGames;
+  let setDone = false, setWinner = null;
+
+  if ((i >= 6 && i - o >= 2) || i === 7) {
+    setDone = true; setWinner = 'isaac';
+  } else if ((o >= 6 && o - i >= 2) || o === 7) {
+    setDone = true; setWinner = 'opp';
+  }
+
+  if (setDone) {
+    M.setHistory.push({ isaac: M.isaacGames, opp: M.oppGames });
+    if (setWinner === 'isaac') M.isaacSets++; else M.oppSets++;
+    M.isaacGames = 0; M.oppGames = 0;
+    M.currentSet++;
+    document.getElementById('hdr-isaac-sets').textContent = M.isaacSets;
+    document.getElementById('hdr-opp-sets').textContent   = M.oppSets;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════
+function renderAll() {
+  renderHeader();
+  renderScoreDisplay();
+  renderServeContext();
+  renderSteps();
+}
+
+function renderHeader() {
+  document.getElementById('hdr-isaac-sets').textContent = M.isaacSets;
+  document.getElementById('hdr-opp-sets').textContent   = M.oppSets;
+  document.getElementById('gc-set').textContent  = 'SET ' + M.currentSet;
+  document.getElementById('gc-game').textContent = `Game ${M.game.number} · ${M.isaacGames}–${M.oppGames}`;
+}
+
+function renderScoreDisplay() {
+  const g = M.game;
+  let iLabel, oLabel;
+
+  if (g.deuce) {
+    if (!g.adServer) {
+      iLabel = 'DEUCE'; oLabel = 'DEUCE';
+    } else if (g.adServer === 'isaac') {
+      iLabel = 'AD'; oLabel = '';
+    } else {
+      iLabel = ''; oLabel = 'AD';
+    }
+  } else {
+    iLabel = SCORE_LABELS[Math.min(g.isaacRawPts, 3)] || '0';
+    oLabel = SCORE_LABELS[Math.min(g.oppRawPts,   3)] || '0';
+  }
+
+  document.getElementById('pts-isaac').textContent = iLabel;
+  document.getElementById('pts-opp').textContent   = oLabel;
+
+  // Server pip
+  document.getElementById('pip-isaac').className = 'score-server-pip' + (M.currentServer==='isaac' ? ' visible' : '');
+  document.getElementById('pip-opp').className   = 'score-server-pip' + (M.currentServer==='opp'   ? ' visible' : '');
+
+  // Set history
+  const hist = M.setHistory.map(s => `${s.isaac}–${s.opp}`).join('  ');
+  document.getElementById('set-history').textContent = hist || '—';
+  document.getElementById('game-score-in-set').textContent = `${M.isaacGames} – ${M.oppGames}`;
+}
+
+function renderServeContext() {
+  const isServing = M.currentServer === 'isaac';
+  const roleEl = document.getElementById('sc-role');
+  roleEl.textContent = isServing ? 'Serving' : 'Returning';
+  roleEl.className   = isServing ? 'serving' : 'returning';
+
+  const snEl = document.getElementById('sc-serve-num');
+  if (isServing) {
+    snEl.textContent = M.point.serve === 1 ? '1st Serve' : '2nd Serve';
+    snEl.className   = 'sc-serve-num' + (M.point.serve === 2 ? ' second' : '');
+  } else {
+    snEl.textContent = '';
+    snEl.className   = 'sc-serve-num';
+  }
+}
+
+function renderSteps() {
+  const step = M.step;
+
+  // Serve step label changes on 2nd serve
+  document.getElementById('step-serve-label').textContent =
+    M.point.serve === 2 ? '2nd Serve Outcome' : 'Serve Outcome';
+
+  show('step-serve',   step === 'serve-isaac');
+  show('step-return',  step === 'serve-opp');
+  show('step-outcome', step === 'outcome');
+  show('step-grades',  step === 'grades');
+}
+
+function show(id, visible) {
+  document.getElementById(id).style.display = visible ? 'block' : 'none';
+}
+
+function addDot(cls) {
+  const strip = document.getElementById('point-strip');
+  const d = document.createElement('div');
+  d.className = 'point-dot ' + cls;
+  strip.appendChild(d);
+}
+
+function renderGameLog() {
+  const section = document.getElementById('game-log-section');
+  const log = document.getElementById('game-log');
+  section.style.display = 'block';
+  log.innerHTML = '';
+  const oppShort = M.setup.opp.split(',')[0];
+  [...M.games].reverse().forEach(g => {
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    const wCls   = g.winner === 'isaac' ? 'isaac' : 'opp';
+    const wLabel = g.winner === 'isaac' ? 'Isaac' : oppShort;
+    div.innerHTML = `
+      <span class="log-game-num">S${g.setNum} G${g.gameNum}</span>
+      <span class="log-score ${wCls}">${wLabel}</span>
+      <div class="log-grades">
+        <span class="log-c">C:${g.composure}</span>
+        <span class="log-i">I:${g.intensity}</span>
+      </div>`;
+    log.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// SUMMARY
+// ═══════════════════════════════════════════════════════
+function endMatch() {
+  if (M.games.length === 0) { showToast('Log at least one game first'); return; }
+  buildSummary();
+  showScreen('summary');
+  saveMatch();
+}
+
+function buildSummary() {
+  const opp = M.setup.opp;
+  const oppShort = opp.split(',')[0];
+  document.getElementById('sum-title').textContent = `Isaac ${M.isaacSets}–${M.oppSets} ${oppShort}`;
+  document.getElementById('sum-meta').textContent  = `${M.setup.date} · ${M.setup.level} ${M.setup.round} · ${M.setup.surface}`;
+
+  let totalPts=0,isaacPts=0,isaacErrors=0,oppErrors=0;
+  let isaacWinners=0,oppWinners=0,serves1=0,serves2=0;
+  let df=0,aces=0,isaacGamesWon=0,leadDis=0,returnMiss=0;
+
+  M.games.forEach(g => {
+    if (g.winner==='isaac') isaacGamesWon++;
+    if (g.leadDisengaged) leadDis++;
+    g.points.forEach(p => {
+      totalPts++;
+      const iw = (p.outcome==='IE'||p.outcome==='OM');
+      if (iw) isaacPts++;
+      if (p.outcome==='IM') isaacErrors++;
+      if (p.outcome==='OM') oppErrors++;
+      if (p.outcome==='IE') isaacWinners++;
+      if (p.outcome==='OE') oppWinners++;
+      if (p.server==='isaac') {
+        if (p.serve===1) serves1++; else serves2++;
+        if (p.serveResult==='df')  df++;
+        if (p.serveResult==='ace') aces++;
+      }
+      if (p.server==='opp' && p.returnResult==='miss') returnMiss++;
+    });
+  });
+
+  const avgC = (M.games.reduce((a,g)=>a+g.composure,0)/M.games.length).toFixed(1);
+  const avgI = (M.games.reduce((a,g)=>a+g.intensity,0)/M.games.length).toFixed(1);
+  const ptPct = totalPts>0 ? Math.round(isaacPts/totalPts*100) : 0;
+  const gPct  = M.games.length>0 ? Math.round(isaacGamesWon/M.games.length*100) : 0;
+
+  document.getElementById('stat-grid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Points Won</div>
+      <div class="stat-val">${ptPct}%</div>
+      <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${ptPct}%"></div></div><span class="bar-pct">${isaacPts}/${totalPts}</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Games Won</div>
+      <div class="stat-val">${gPct}%</div>
+      <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${gPct}%"></div></div><span class="bar-pct">${isaacGamesWon}/${M.games.length}</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Composure</div>
+      <div class="stat-val" style="color:var(--accent2)">${avgC}</div>
+      <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${avgC/5*100}%;background:var(--accent2)"></div></div><span class="bar-pct">/5</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Intensity</div>
+      <div class="stat-val" style="color:var(--warn)">${avgI}</div>
+      <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${avgI/5*100}%;background:var(--warn)"></div></div><span class="bar-pct">/5</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Isaac Errors</div>
+      <div class="stat-val" style="color:var(--danger)">${isaacErrors}</div>
+      <div class="stat-sub">Opp errors: ${oppErrors}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Isaac Winners</div>
+      <div class="stat-val">${isaacWinners}</div>
+      <div class="stat-sub">Opp winners: ${oppWinners}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Serve (Isaac)</div>
+      <div class="stat-val">${aces}<span style="font-size:16px;color:var(--muted)"> ace</span></div>
+      <div class="stat-sub">DF: ${df} · 1st pts: ${serves1} · 2nd: ${serves2}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Return Errors</div>
+      <div class="stat-val" style="color:${returnMiss>4?'var(--danger)':'var(--text)'}">${returnMiss}</div>
+      <div class="stat-sub">missed returns</div>
+    </div>
+    <div class="stat-card full">
+      <div class="stat-label">Lead Disengagement</div>
+      <div class="stat-val" style="color:${leadDis>2?'var(--danger)':leadDis>0?'var(--warn)':'var(--accent)'}">${leadDis}</div>
+      <div class="stat-sub">games where Isaac led in points then lost the game</div>
+    </div>`;
+
+  const gbg = document.getElementById('gbg-list');
+  gbg.innerHTML = '';
+  M.games.forEach(g => {
+    const div = document.createElement('div');
+    div.className = 'gbg-row';
+    const wCls = g.winner==='isaac' ? 'isaac' : 'opp';
+    const wLbl = g.winner==='isaac' ? 'Isaac' : oppShort;
+    div.innerHTML = `
+      <span class="gbg-game">S${g.setNum} G${g.gameNum}</span>
+      <span class="gbg-winner ${wCls}">${wLbl}${g.leadDisengaged?' ⚑':''}</span>
+      <span class="gbg-c">C${g.composure}</span>
+      <span class="gbg-i">I${g.intensity}</span>`;
+    gbg.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════════════
+function buildPayload() {
+  let totalPts=0,isaacPts=0,isaacErrors=0,oppErrors=0;
+  let isaacWinners=0,oppWinners=0,serves1=0,serves2=0;
+  let df=0,aces=0,isaacGamesWon=0,leadDis=0,returnMiss=0;
+
+  M.games.forEach(g => {
+    if (g.winner==='isaac') isaacGamesWon++;
+    if (g.leadDisengaged) leadDis++;
+    g.points.forEach(p => {
+      totalPts++;
+      if (p.outcome==='IE'||p.outcome==='OM') isaacPts++;
+      if (p.outcome==='IM') isaacErrors++;
+      if (p.outcome==='OM') oppErrors++;
+      if (p.outcome==='IE') isaacWinners++;
+      if (p.outcome==='OE') oppWinners++;
+      if (p.server==='isaac') {
+        if (p.serve===1) serves1++; else serves2++;
+        if (p.serveResult==='df')  df++;
+        if (p.serveResult==='ace') aces++;
+      }
+      if (p.server==='opp' && p.returnResult==='miss') returnMiss++;
+    });
+  });
+
+  return {
+    date: M.setup.date, level: M.setup.level, round: M.setup.round,
+    surface: M.setup.surface, opp: M.setup.opp,
+    isaacSets: M.isaacSets, oppSets: M.oppSets,
+    totalGames: M.games.length, isaacGamesWon,
+    totalPoints: totalPts, isaacPoints: isaacPts,
+    pointWinPct: totalPts>0 ? Math.round(isaacPts/totalPts*100) : 0,
+    isaacErrors, oppErrors, isaacWinners, oppWinners,
+    aces, doubleFaults: df, returnMisses: returnMiss,
+    firstServePoints: serves1, secondServePoints: serves2,
+    avgComposure: (M.games.reduce((a,g)=>a+g.composure,0)/M.games.length).toFixed(2),
+    avgIntensity: (M.games.reduce((a,g)=>a+g.intensity,0)/M.games.length).toFixed(2),
+    leadDisengagement: leadDis,
+    games: M.games
+  };
+}
+
+function copyReport() {
+  const p = buildPayload();
+  const oppShort = p.opp.split(',')[0];
+  let t = `ISAAC MATCH REPORT\n`;
+  t += `${p.date} · ${p.level} ${p.round} · ${p.surface}\n`;
+  t += `vs ${p.opp} — Result: ${p.isaacSets}–${p.oppSets}\n\n`;
+  t += `GAME LOG\n`;
+  M.games.forEach(g => {
+    const w = g.winner==='isaac' ? 'Isaac' : oppShort;
+    t += `S${g.setNum}G${g.gameNum}: ${w} | C:${g.composure} I:${g.intensity}${g.leadDisengaged?' ⚑':''}\n`;
+  });
+  t += `\nSTATS\n`;
+  t += `Points: ${p.isaacPoints}/${p.totalPoints} (${p.pointWinPct}%)\n`;
+  t += `Errors: ${p.isaacErrors} | Winners: ${p.isaacWinners}\n`;
+  t += `Aces: ${p.aces} | DFs: ${p.doubleFaults} | Return Errors: ${p.returnMisses}\n`;
+  t += `Avg Composure: ${p.avgComposure}/5 | Avg Intensity: ${p.avgIntensity}/5\n`;
+  t += `Lead Disengagement: ${p.leadDisengagement} games\n`;
+  navigator.clipboard.writeText(t)
+    .then(()=>showToast('Copied!'))
+    .catch(()=>showToast('Copy failed'));
+}
+
+async function exportToSheets() {
+  let url = localStorage.getItem('isaac_sheet_url') || '';
+  if (!url) {
+    url = prompt('Paste your Apps Script Web App URL:');
+    if (!url) return;
+    localStorage.setItem('isaac_sheet_url', url.trim());
+  }
+  const btn = document.getElementById('sheets-btn');
+  btn.textContent = 'Sending…'; btn.disabled = true;
+  try {
+    await fetch(url.trim(), {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buildPayload())
+    });
+    showToast('Saved to Sheets ✓');
+    btn.textContent = 'Saved ✓';
+  } catch(e) {
+    showToast('Check URL in settings');
+    btn.textContent = '→ Sheets'; btn.disabled = false;
+  }
+}
+
+function resetSheetUrl() {
+  localStorage.removeItem('isaac_sheet_url');
+  showToast('URL cleared — tap → Sheets to re-enter');
+  document.getElementById('sheets-btn').textContent = '→ Sheets';
+  document.getElementById('sheets-btn').disabled = false;
+}
+
+// ═══════════════════════════════════════════════════════
+// LOCAL STORAGE
+// ═══════════════════════════════════════════════════════
+function saveMatch() {
+  try {
+    const matches = JSON.parse(localStorage.getItem('isaac_matches') || '[]');
+    matches.unshift({
+      date: M.setup.date, opp: M.setup.opp,
+      level: M.setup.level, round: M.setup.round,
+      isaacSets: M.isaacSets, oppSets: M.oppSets,
+      avgComposure: (M.games.reduce((a,g)=>a+g.composure,0)/M.games.length).toFixed(1),
+      avgIntensity: (M.games.reduce((a,g)=>a+g.intensity,0)/M.games.length).toFixed(1)
+    });
+    localStorage.setItem('isaac_matches', JSON.stringify(matches.slice(0,20)));
+  } catch(e) {}
+}
+
+function loadPastMatches() {
+  try {
+    const matches = JSON.parse(localStorage.getItem('isaac_matches') || '[]');
+    if (!matches.length) return;
+    document.getElementById('past-section').style.display = 'block';
+    const list = document.getElementById('past-list');
+    list.innerHTML = '';
+    matches.slice(0,5).forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      const cls = m.isaacSets > m.oppSets ? 'isaac' : 'opp';
+      div.innerHTML = `
+        <span class="log-game-num">${m.date}</span>
+        <span class="log-score ${cls}">${m.isaacSets}–${m.oppSets} ${m.opp.split(',')[0]}</span>
+        <div class="log-grades"><span class="log-c">C:${m.avgComposure}</span><span class="log-i">I:${m.avgIntensity}</span></div>`;
+      list.appendChild(div);
+    });
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2000);
+}
+
+function newMatch() {
+  M = freshMatch();
+  document.getElementById('opp-name').value = '';
+  document.getElementById('point-strip').innerHTML = '';
+  document.getElementById('game-log').innerHTML = '';
+  document.getElementById('game-log-section').style.display = 'none';
+  document.querySelectorAll('.grade-btn').forEach(b => b.className = 'grade-btn');
+  loadPastMatches();
+  showScreen('setup');
+}
+
+function endMatch() {
+  if (M.games.length === 0) { showToast('Log at least one game first'); return; }
+  buildSummary();
+  showScreen('summary');
+  saveMatch();
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+M = freshMatch();
+document.getElementById('match-date').value = new Date().toISOString().split('T')[0];
+loadPastMatches();
+</script>
+</body>
+</html>
