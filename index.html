@@ -2043,6 +2043,7 @@ async function exportToSheets() {
   try {
     await fetch(url.trim(),{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(buildPayload())});
     showToast('Saved to Sheets ✓'); btn.textContent='Saved ✓';
+    setTimeout(()=>{ btn.textContent='→ Sheets'; btn.disabled=false; }, 3000);
   } catch(e) { showToast('Check URL'); btn.textContent='→ Sheets'; btn.disabled=false; }
 }
 
