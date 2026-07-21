@@ -264,8 +264,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:10
       <div class="field-group"><div class="field-label">Date</div><input class="field-input" type="date" id="match-date"></div>
     </div>
     <div class="row2">
-      <div class="field-group"><div class="field-label">Opp WTN</div><input class="field-input" type="text" id="opp-wtn" placeholder="e.g. 28.5" inputmode="decimal"></div>
-      <div class="field-group"><div class="field-label">Opp UTR</div><input class="field-input" type="text" id="opp-utr" placeholder="e.g. 6.8" inputmode="decimal"></div>
+      <div class="field-group"><div class="field-label">Opp WTN <span style="font-size:9px;color:var(--muted);letter-spacing:.06em;font-weight:400;">optional</span></div><input class="field-input" type="text" id="opp-wtn" placeholder="e.g. 28.5" inputmode="decimal"></div>
+      <div class="field-group"><div class="field-label">Opp UTR <span style="font-size:9px;color:var(--muted);letter-spacing:.06em;font-weight:400;">optional</span></div><input class="field-input" type="text" id="opp-utr" placeholder="e.g. 6.8" inputmode="decimal"></div>
     </div>
     <div class="setup-divider"></div>
     <div class="field-group">
@@ -376,17 +376,17 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:10
     <div id="step-serve">
       <div class="directive" id="step-serve-label">Serve Outcome</div>
       <div class="action-grid cols-3" id="serve-btns-row">
-        <div class="act v-blue" onclick="onServeResult('in')"><div class="act-label">In</div><div class="act-sub">Rally</div></div>
-        <div class="act v-warn" id="fault-btn" onclick="onServeResult('fault')"><div class="act-label">Fault</div><div class="act-sub">2nd serve</div></div>
-        <div class="act v-loss" onclick="onServeResult('df')"><div class="act-label">Dbl Fault</div><div class="act-sub">Lost</div></div>
+        <div class="act v-blue" onclick="onServeResult('in')"><div class="act-label">In</div></div>
+        <div class="act v-warn" id="fault-btn" onclick="onServeResult('fault')"><div class="act-label">Fault</div></div>
+        <div class="act v-loss" onclick="onServeResult('df')"><div class="act-label">Dbl Fault</div></div>
       </div>
       <div class="action-grid cols-3" style="margin-top:9px;">
-        <div class="act act-wide v-win" onclick="onServeResult('ace')" style="grid-column:span 2"><div class="act-body"><div class="act-label">Ace</div><div class="act-sub">Point won</div></div></div>
-        <div class="act v-ghost" onclick="onServeResult('let')"><div class="act-label">Let</div><div class="act-sub">Re-serve</div></div>
+        <div class="act act-wide v-win" onclick="onServeResult('ace')" style="grid-column:span 2"><div class="act-body"><div class="act-label">Ace</div></div></div>
+        <div class="act v-ghost" onclick="onServeResult('let')"><div class="act-label">Let</div></div>
       </div>
       <div class="action-grid cols-2" style="margin-top:9px;">
-        <div class="act v-win" onclick="onServeResult('opp-return-miss')"><div class="act-label">Opp Return Miss</div><div class="act-sub">Point won</div></div>
-        <div class="act v-na" onclick="onServeResult('na')"><div class="act-label">Missed It</div><div class="act-sub">N/A</div></div>
+        <div class="act v-win" onclick="onServeResult('opp-return-miss')"><div class="act-label">Opp Return Miss</div></div>
+        <div class="act v-na" onclick="onServeResult('na')"><div class="act-label">Missed It</div></div>
       </div>
     </div>
 
@@ -394,8 +394,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:10
     <div id="step-na-winner" style="display:none;">
       <div class="directive">Who Won the Point?</div>
       <div class="action-grid cols-2">
-        <div class="act v-win" onclick="onNaWinner(true)"><div class="act-label">Player Won</div><div class="act-sub">Score advances</div></div>
-        <div class="act v-loss" onclick="onNaWinner(false)"><div class="act-label">Opp Won</div><div class="act-sub">Score advances</div></div>
+        <div class="act v-win" onclick="onNaWinner(true)"><div class="act-label">Player Won</div></div>
+        <div class="act v-loss" onclick="onNaWinner(false)"><div class="act-label">Opp Won</div></div>
       </div>
     </div>
 
@@ -403,12 +403,12 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:10
     <div id="step-return" style="display:none;">
       <div class="directive">Return</div>
       <div class="action-grid cols-2">
-        <div class="act v-blue" onclick="onReturnResult('in')"><div class="act-label">Return In</div><div class="act-sub">Rally on</div></div>
-        <div class="act v-loss" onclick="onReturnResult('miss')"><div class="act-label">Return Miss</div><div class="act-sub">Lost</div></div>
+        <div class="act v-blue" onclick="onReturnResult('in')"><div class="act-label">Return In</div></div>
+        <div class="act v-loss" onclick="onReturnResult('miss')"><div class="act-label">Return Miss</div></div>
       </div>
       <div class="action-grid cols-2" style="margin-top:9px;">
-        <div class="act act-wide v-win" onclick="onReturnResult('opp-df')"><div class="act-body"><div class="act-label">Opp Dbl Fault</div><div class="act-sub">Free point</div></div></div>
-        <div class="act v-na" onclick="onReturnResult('na')"><div class="act-label">Missed It</div><div class="act-sub">N/A</div></div>
+        <div class="act act-wide v-win" onclick="onReturnResult('opp-df')"><div class="act-body"><div class="act-label">Opp Dbl Fault</div></div></div>
+        <div class="act v-na" onclick="onReturnResult('na')"><div class="act-label">Missed It</div></div>
       </div>
     </div>
 
@@ -416,22 +416,23 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:10
     <div id="step-outcome" style="display:none;">
       <div class="directive">Point Outcome</div>
       <div class="action-grid cols-2">
-        <div class="act v-win" onclick="onOutcome('IE')"><div class="act-label">Player Earns</div><div class="act-sub">Winner / Force</div></div>
-        <div class="act v-loss" onclick="onOutcome('OE')"><div class="act-label">Opp Earns</div><div class="act-sub">Winner / Force</div></div>
-        <div class="act v-loss" onclick="onOutcome('IM')"><div class="act-label">Player Error</div><div class="act-sub">Unforced</div></div>
-        <div class="act v-win" onclick="onOutcome('OM')"><div class="act-label">Opp Error</div><div class="act-sub">Unforced</div></div>
+        <div class="act v-win" onclick="onOutcome('IE')"><div class="act-label">Player Earns</div></div>
+        <div class="act v-loss" onclick="onOutcome('OE')"><div class="act-label">Opp Earns</div></div>
+        <div class="act v-loss" onclick="onOutcome('IM')"><div class="act-label">Player Error</div></div>
+        <div class="act v-win" onclick="onOutcome('OM')"><div class="act-label">Opp Error</div></div>
       </div>
       <div class="action-grid cols-1" style="margin-top:9px;">
-        <div class="act v-na" onclick="onOutcome('NA')"><div class="act-label">Missed It</div><div class="act-sub">N/A — skip this point's detail</div></div>
+        <div class="act v-na" onclick="onOutcome('NA')"><div class="act-label">Missed It</div></div>
       </div>
     </div>
 
     <!-- FORCED/UNFORCED (Deep mode only, after error selection) -->
     <div id="step-force" style="display:none;">
-      <div class="directive">Was the error forced or unforced?</div>
-      <div class="action-grid cols-2">
-        <div class="act v-warn" onclick="onForceClassify('forced')"><div class="act-label">Forced</div><div class="act-sub">Opponent created it</div></div>
-        <div class="act v-ghost" onclick="onForceClassify('unforced')"><div class="act-label">Unforced</div><div class="act-sub">Player's own mistake</div></div>
+      <div class="directive">Forced or unforced?</div>
+      <div class="action-grid cols-3">
+        <div class="act v-warn" onclick="onForceClassify('forced')"><div class="act-label">Forced</div></div>
+        <div class="act v-ghost" onclick="onForceClassify('unforced')"><div class="act-label">Unforced</div></div>
+        <div class="act v-ghost" onclick="onForceClassify(null)"><div class="act-label">Skip</div></div>
       </div>
     </div>
 
