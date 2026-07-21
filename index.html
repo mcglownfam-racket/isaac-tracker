@@ -224,6 +224,17 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:10
 .btn-new{width:100%;background:var(--ink);color:var(--bg);border:none;border-radius:8px;font-family:var(--sans);font-size:16px;font-weight:800;letter-spacing:.06em;padding:15px;cursor:pointer;text-transform:uppercase;transition:all .12s}
 .btn-new:active{opacity:.85;transform:scale(.98)}
 .reset-url-btn{width:100%;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:10px;cursor:pointer}
+/* ── STACKED CHART ── */
+.stack-chart{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.stack-row{display:flex;flex-direction:column;gap:4px}
+.stack-label{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stack-bars{display:flex;height:28px;border-radius:6px;overflow:hidden;gap:1px}
+.stack-seg{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;min-width:0;overflow:hidden;transition:width .4s ease;white-space:nowrap}
+.stack-seg span{padding:0 4px;overflow:hidden}
+.seg-ace{background:#1a4be8}.seg-win{background:#3d7a00}.seg-owin{background:#5a9e2f}.seg-ufErr{background:#c92a18}.seg-fErr{background:#e85a45}.seg-oufErr{background:#6b0f0f}.seg-ofErr{background:#a01a1a}.seg-rm{background:#d97706}.seg-orm{background:#92400e}.seg-df{background:#7c3aed}.seg-other{background:#9a9589}
+.stack-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.legend-item{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;color:var(--muted)}
+.legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 
 /* ── TOAST ── */
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(72px);background:var(--ink2);color:var(--bg);font-family:var(--sans);font-size:13px;font-weight:700;letter-spacing:.06em;padding:10px 22px;border-radius:100px;transition:transform .25s ease;z-index:100;white-space:nowrap;text-transform:uppercase;box-shadow:0 4px 20px rgba(0,0,0,.18)}
@@ -373,8 +384,9 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:10
         <div class="act act-wide v-win" onclick="onServeResult('ace')" style="grid-column:span 2"><div class="act-body"><div class="act-label">Ace</div><div class="act-sub">Point won</div></div></div>
         <div class="act v-ghost" onclick="onServeResult('let')"><div class="act-label">Let</div><div class="act-sub">Re-serve</div></div>
       </div>
-      <div class="action-grid cols-1" style="margin-top:9px;">
-        <div class="act v-na" onclick="onServeResult('na')"><div class="act-label">Missed It</div><div class="act-sub">N/A — who won the point?</div></div>
+      <div class="action-grid cols-2" style="margin-top:9px;">
+        <div class="act v-win" onclick="onServeResult('opp-return-miss')"><div class="act-label">Opp Return Miss</div><div class="act-sub">Point won</div></div>
+        <div class="act v-na" onclick="onServeResult('na')"><div class="act-label">Missed It</div><div class="act-sub">N/A</div></div>
       </div>
     </div>
 
@@ -411,6 +423,15 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:10
       </div>
       <div class="action-grid cols-1" style="margin-top:9px;">
         <div class="act v-na" onclick="onOutcome('NA')"><div class="act-label">Missed It</div><div class="act-sub">N/A — skip this point's detail</div></div>
+      </div>
+    </div>
+
+    <!-- FORCED/UNFORCED (Deep mode only, after error selection) -->
+    <div id="step-force" style="display:none;">
+      <div class="directive">Was the error forced or unforced?</div>
+      <div class="action-grid cols-2">
+        <div class="act v-warn" onclick="onForceClassify('forced')"><div class="act-label">Forced</div><div class="act-sub">Opponent created it</div></div>
+        <div class="act v-ghost" onclick="onForceClassify('unforced')"><div class="act-label">Unforced</div><div class="act-sub">Player's own mistake</div></div>
       </div>
     </div>
 
@@ -501,6 +522,10 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:10
   <div class="summary-hero"><div class="sum-title" id="sum-title">Match Summary</div><div class="sum-meta" id="sum-meta"></div></div>
   <div class="summary-body">
     <div class="stat-grid" id="stat-grid"></div>
+    <div id="stacked-chart-section">
+      <div class="section-head" style="margin-bottom:8px;">Point Breakdown</div>
+      <div id="stacked-chart-container"></div>
+    </div>
     <div>
       <div class="section-head" style="margin-bottom:8px;">Trend Charts</div>
       <div class="charts-wrap">
@@ -526,7 +551,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:10
 const SCORE_LABELS=['0','15','30','40'];
 let M={},trackingMode='quick',courtType='outdoor',surfaceType='hard';
 let selectedLevel='L7',selectedRound='R1',selectedFormat='mtb',noAd=false;
-let lastSnapshot=null,naSource=null;
+let undoStack=[],naSource=null;
 let syncState={ps:0,os:0,pg:0,og:0,pp:0,op:0,srv:'isaac'};
 
 const FORMATS={
@@ -617,6 +642,7 @@ function onServeResult(r){
   if(r==='fault'){M.point.serve=2;renderServeContext();renderSteps();return}
   if(r==='df'){M.point.serve=2;M.point.outcome='OE';logPoint(false);return}
   if(r==='ace'){M.point.outcome='IE';logPoint(true);return}
+  if(r==='opp-return-miss'){M.point.outcome='IE';M.point.returnMiss=true;logPoint(true);return}
   M.step='outcome';renderSteps();
 }
 function onReturnResult(r){
@@ -627,8 +653,21 @@ function onReturnResult(r){
   M.step='outcome';renderSteps();
 }
 function onOutcome(c){
-  if(c==='NA'){M.point.outcome='NA';logPoint(false,true);return} // NA — need winner
-  M.point.outcome=c;logPoint(c==='IE'||c==='OM');
+  if(c==='NA'){M.point.outcome='NA';logPoint(false,true);return}
+  M.point.outcome=c;
+  const isError=(c==='IM'||c==='OE');
+  const deep=(M.setup.trackingMode||trackingMode)==='deep';
+  if(isError&&deep){
+    // Ask forced vs unforced before logging
+    show('step-outcome',false);show('step-force',true);
+    return;
+  }
+  logPoint(c==='IE'||c==='OM');
+}
+function onForceClassify(type){
+  M.point.errorType=type; // 'forced' | 'unforced'
+  show('step-force',false);
+  logPoint(M.point.outcome==='IE'||M.point.outcome==='OM');
 }
 function onNaWinner(isaacWins){
   show('step-na-winner',false);
@@ -640,7 +679,7 @@ function onNaWinner(isaacWins){
 // ── LOG POINT ──
 function logPoint(isaacWins,naOutcome){
   saveSnapshot();
-  M.game.points.push({serve:M.point.serve,server:M.currentServer,serveResult:M.point.serveResult,returnResult:M.point.returnResult,outcome:M.point.outcome,na:!!(naOutcome||(M.point.outcome==='NA'))});
+  M.game.points.push({serve:M.point.serve,server:M.currentServer,serveResult:M.point.serveResult,returnResult:M.point.returnResult,outcome:M.point.outcome,na:!!(naOutcome||(M.point.outcome==='NA')),errorType:M.point.errorType||null,oppReturnMiss:!!M.point.returnMiss});
   addDot(M.point.outcome==='NA'?'na':isaacWins?'iw':'ow');
   const g=M.game;
   if(isaacWins)g.isaacRawPts++;else g.oppRawPts++;
@@ -659,13 +698,13 @@ function logPoint(isaacWins,naOutcome){
 }
 
 // ── UNDO ──
-function saveSnapshot(){lastSnapshot=JSON.parse(JSON.stringify({M_state:M,trackingMode,pointStripHTML:document.getElementById('point-strip').innerHTML}));showUndo(true)}
-function undoLastPoint(){if(!lastSnapshot){showToast('Nothing to undo');return}M=lastSnapshot.M_state;trackingMode=lastSnapshot.trackingMode;document.getElementById('point-strip').innerHTML=lastSnapshot.pointStripHTML;lastSnapshot=null;showUndo(false);wireMatchDisplay();document.getElementById('hdr-isaac-sets').textContent=M.isaacSets;document.getElementById('hdr-opp-sets').textContent=M.oppSets;document.querySelectorAll('.zone').forEach(z=>z.className='zone');show('step-na-winner',false);renderAll();renderGameLog();autoSave();showToast('Undone ↩')}
+function saveSnapshot(){undoStack.push(JSON.parse(JSON.stringify({M_state:M,trackingMode,pointStripHTML:document.getElementById('point-strip').innerHTML})));showUndo(true)}
+function undoLastPoint(){if(!undoStack.length){showToast('Nothing to undo');return}const snap=undoStack.pop();M=snap.M_state;trackingMode=snap.trackingMode;document.getElementById('point-strip').innerHTML=snap.pointStripHTML;showUndo(undoStack.length>0);wireMatchDisplay();document.getElementById('hdr-isaac-sets').textContent=M.isaacSets;document.getElementById('hdr-opp-sets').textContent=M.oppSets;document.querySelectorAll('.zone').forEach(z=>z.className='zone');show('step-na-winner',false);renderAll();renderGameLog();autoSave();showToast('Undone ↩ ('+(undoStack.length)+' more)')}
 function showUndo(v){document.getElementById('undo-btn').classList.toggle('visible',v)}
 
 // ── WIN FLASH ──
 function flashWin(type){const el=document.getElementById('win-flash');el.className='win-flash '+type;requestAnimationFrame(()=>{el.classList.add('show');setTimeout(()=>el.classList.remove('show'),type==='set-win'?700:300)});const s=document.getElementById('hdr-isaac-sets');s.classList.remove('score-bump');void s.offsetWidth;s.classList.add('score-bump');setTimeout(()=>s.classList.remove('score-bump'),400)}
-function resetPointState(){M.point={serve:1,serveResult:null,returnResult:null,outcome:null};naSource=null}
+function resetPointState(){M.point={serve:1,serveResult:null,returnResult:null,outcome:null,errorType:null,returnMiss:false};naSource=null}
 
 // ── GRADES ──
 function setGrade(type,val){
@@ -688,7 +727,7 @@ function confirmEndGame(){
   M.currentServer=M.currentServer==='isaac'?'opp':'isaac';
   M.game={number:M.games.length+1,server:M.currentServer,isaacRawPts:0,oppRawPts:0,deuce:false,adServer:null,points:[],composure:null,intensity:null};
   resetPointState();M.step=M.currentServer==='isaac'?'serve-isaac':'serve-opp';
-  lastSnapshot=null;showUndo(false);
+  undoStack=[];showUndo(false);
   document.querySelectorAll('.zone').forEach(z=>z.className='zone');
   document.getElementById('point-strip').innerHTML='';
   renderAll();renderGameLog();autoSave();
@@ -777,7 +816,7 @@ function renderSteps(){
   const fb=document.getElementById('fault-btn'),sr=document.getElementById('serve-btns-row');
   if(fb){fb.style.display=is2nd?'none':'flex';sr.className=is2nd?'action-grid cols-2':'action-grid cols-3'}
   show('step-serve',step==='serve-isaac');show('step-return',step==='serve-opp');
-  show('step-outcome',step==='outcome');show('step-na-winner',false);
+  show('step-outcome',step==='outcome');show('step-na-winner',false);show('step-force',false);
   const deep=(M.setup.trackingMode||trackingMode)==='deep';
   show('step-grades',step==='grades'&&deep);
 }
@@ -801,20 +840,83 @@ function renderGameLog(){
 
 // ── CHARTS ──
 function computeTrends(games){
-  let cC=0,cI=0,cS=0,cP=0;const composure=[],intensity=[],serve=[],points=[];
+  let cS=0,cP=0;const composure=[],intensity=[],serve=[],points=[];
   games.forEach(g=>{
-    // Skip N/A grades in composure/intensity
-    if(g.composure!==99)cC+=g.composure;
-    if(g.intensity!==99)cI+=g.intensity;
+    // Composure & Intensity: plot raw per-game value so ups/downs are visible
+    composure.push(g.composure===99||g.composure===null?null:g.composure);
+    intensity.push(g.intensity===99||g.intensity===null?null:g.intensity);
     let gS=0;g.points.forEach(p=>{if(!p.na&&p.server==='isaac'){if(p.serveResult==='ace')gS+=3;else if(p.serveResult==='df')gS-=3;else if(p.serve===1)gS+=2;else gS+=1}});cS+=gS;
     let gP=0;g.points.forEach(p=>{if(!p.na){if(p.outcome==='IE')gP+=2;else if(p.outcome==='OE')gP-=2;else if(p.outcome==='IM')gP-=1;else if(p.outcome==='OM')gP+=1}});cP+=gP;
-    composure.push(cC);intensity.push(cI);serve.push(cS);points.push(cP);
+    serve.push(cS);points.push(cP);
   });
   return{composure,intensity,serve,points};
 }
-function drawChart(svgId,data,color){const svg=document.getElementById(svgId);if(!svg||!data.length)return;svg.innerHTML='';const W=svg.parentElement.clientWidth||280,H=72,pad={l:24,r:8,t:6,b:8},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b,all=[0,...data],minV=Math.min(...all),maxV=Math.max(...all),range=maxV-minV||1;const toX=i=>pad.l+(i/Math.max(data.length-1,1))*iW,toY=v=>pad.t+(1-(v-minV)/range)*iH,zY=toY(0);const zl=document.createElementNS('http://www.w3.org/2000/svg','line');zl.setAttribute('x1',pad.l);zl.setAttribute('x2',pad.l+iW);zl.setAttribute('y1',zY);zl.setAttribute('y2',zY);zl.setAttribute('stroke','#dedad1');zl.setAttribute('stroke-width','1');zl.setAttribute('stroke-dasharray','3,3');svg.appendChild(zl);const zLbl=document.createElementNS('http://www.w3.org/2000/svg','text');zLbl.setAttribute('x',pad.l-3);zLbl.setAttribute('y',zY+3);zLbl.setAttribute('text-anchor','end');zLbl.setAttribute('fill','#9a9589');zLbl.setAttribute('font-size','8');zLbl.textContent='0';svg.appendChild(zLbl);if(data.length===1){const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');dot.setAttribute('cx',toX(0));dot.setAttribute('cy',toY(data[0]));dot.setAttribute('r','4');dot.setAttribute('fill',color);svg.appendChild(dot);return}let ap=`M${toX(0)},${toY(data[0])}`;for(let i=1;i<data.length;i++)ap+=` L${toX(i)},${toY(data[i])}`;ap+=` L${toX(data.length-1)},${H} L${toX(0)},${H} Z`;const area=document.createElementNS('http://www.w3.org/2000/svg','path');area.setAttribute('d',ap);area.setAttribute('fill',color);area.setAttribute('opacity','0.09');svg.appendChild(area);let lp=`M${toX(0)},${toY(data[0])}`;for(let i=1;i<data.length;i++)lp+=` L${toX(i)},${toY(data[i])}`;const line=document.createElementNS('http://www.w3.org/2000/svg','path');line.setAttribute('d',lp);line.setAttribute('fill','none');line.setAttribute('stroke',color);line.setAttribute('stroke-width','2');line.setAttribute('stroke-linejoin','round');svg.appendChild(line);data.forEach((v,i)=>{const cx=toX(i),cy=toY(v);const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');dot.setAttribute('cx',cx);dot.setAttribute('cy',cy);dot.setAttribute('r','3');dot.setAttribute('fill',color);svg.appendChild(dot);if(i===data.length-1){const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');lbl.setAttribute('x',cx+5);lbl.setAttribute('y',cy+4);lbl.setAttribute('fill',color);lbl.setAttribute('font-size','10');lbl.setAttribute('font-weight','700');lbl.textContent=v>0?'+'+v:v;svg.appendChild(lbl)}const gL=document.createElementNS('http://www.w3.org/2000/svg','text');gL.setAttribute('x',cx);gL.setAttribute('y',H);gL.setAttribute('text-anchor','middle');gL.setAttribute('fill','#9a9589');gL.setAttribute('font-size','7');gL.textContent='G'+(i+1);svg.appendChild(gL)})}
+function drawChart(svgId,data,color){const svg=document.getElementById(svgId);if(!svg||!data.length)return;svg.innerHTML='';const nonNull=data.filter(v=>v!==null);if(!nonNull.length)return;const W=svg.parentElement.clientWidth||280,H=72,pad={l:24,r:8,t:6,b:8},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b,all=[0,...nonNull],minV=Math.min(...all),maxV=Math.max(...all),range=maxV-minV||1;const toX=i=>pad.l+(i/Math.max(data.length-1,1))*iW,toY=v=>pad.t+(1-(v-minV)/range)*iH,zY=toY(0);const zl=document.createElementNS('http://www.w3.org/2000/svg','line');zl.setAttribute('x1',pad.l);zl.setAttribute('x2',pad.l+iW);zl.setAttribute('y1',zY);zl.setAttribute('y2',zY);zl.setAttribute('stroke','#dedad1');zl.setAttribute('stroke-width','1');zl.setAttribute('stroke-dasharray','3,3');svg.appendChild(zl);const zLbl=document.createElementNS('http://www.w3.org/2000/svg','text');zLbl.setAttribute('x',pad.l-3);zLbl.setAttribute('y',zY+3);zLbl.setAttribute('text-anchor','end');zLbl.setAttribute('fill','#9a9589');zLbl.setAttribute('font-size','8');zLbl.textContent='0';svg.appendChild(zLbl);const validData=data.map((v,i)=>v!==null?{v,i}:null).filter(Boolean);if(validData.length===1){const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');dot.setAttribute('cx',toX(validData[0].i));dot.setAttribute('cy',toY(validData[0].v));dot.setAttribute('r','4');dot.setAttribute('fill',color);svg.appendChild(dot);return}let ap=`M${toX(validData[0].i)},${toY(validData[0].v)}`;for(let k=1;k<validData.length;k++)ap+=` L${toX(validData[k].i)},${toY(validData[k].v)}`;ap+=` L${toX(validData[validData.length-1].i)},${H} L${toX(validData[0].i)},${H} Z`;const area=document.createElementNS('http://www.w3.org/2000/svg','path');area.setAttribute('d',ap);area.setAttribute('fill',color);area.setAttribute('opacity','0.09');svg.appendChild(area);let lp=`M${toX(validData[0].i)},${toY(validData[0].v)}`;for(let k=1;k<validData.length;k++)lp+=` L${toX(validData[k].i)},${toY(validData[k].v)}`;const line=document.createElementNS('http://www.w3.org/2000/svg','path');line.setAttribute('d',lp);line.setAttribute('fill','none');line.setAttribute('stroke',color);line.setAttribute('stroke-width','2');line.setAttribute('stroke-linejoin','round');svg.appendChild(line);data.forEach((v,i)=>{if(v===null)return;const cx=toX(i),cy=toY(v);const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');dot.setAttribute('cx',cx);dot.setAttribute('cy',cy);dot.setAttribute('r','3');dot.setAttribute('fill',color);svg.appendChild(dot);const lastNonNull=data.map((x,j)=>x!==null?j:-1).filter(j=>j>=0).pop();if(i===lastNonNull){const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');lbl.setAttribute('x',cx+5);lbl.setAttribute('y',cy+4);lbl.setAttribute('fill',color);lbl.setAttribute('font-size','10');lbl.setAttribute('font-weight','700');lbl.textContent=v>0?'+'+v:v;svg.appendChild(lbl)}const gL=document.createElementNS('http://www.w3.org/2000/svg','text');gL.setAttribute('x',cx);gL.setAttribute('y',H);gL.setAttribute('text-anchor','middle');gL.setAttribute('fill','#9a9589');gL.setAttribute('font-size','7');gL.textContent='G'+(i+1);svg.appendChild(gL)})}
 function updateChartVal(id,val){const el=document.getElementById(id);if(!el)return;el.textContent=val>0?'+'+val:(val===0?'0':val);el.className='chart-val '+(val>0?'pos':val<0?'neg':'zero')}
 function renderAllCharts(prefix){if(!M.games.length)return;const t=computeTrends(M.games),last=a=>a[a.length-1]||0;drawChart(prefix+'-composure',t.composure,'#1a4be8');drawChart(prefix+'-intensity',t.intensity,'#d97706');drawChart(prefix+'-serve',t.serve,'#3d7a00');drawChart(prefix+'-points',t.points,'#7c3aed');updateChartVal(prefix+'-composure-val',last(t.composure));updateChartVal(prefix+'-intensity-val',last(t.intensity));updateChartVal(prefix+'-serve-val',last(t.serve));updateChartVal(prefix+'-points-val',last(t.points))}
+
+// ── STACKED COMPARISON CHART ──
+function renderStackedComparison(pn,os,s){
+  const c=document.getElementById('stacked-chart-container');if(!c)return;
+  // Two stacks: Player points won breakdown, Opp points won breakdown
+  // Each segment = how those points were earned
+  // Player points = aces + winners + opp errors (forced+unforced) + opp return misses
+  // Opp points = opp winners + player errors (forced+unforced) + player return misses + DFs
+  const pTotal=s.ace+s.iwin+s.oferc+s.ouferc+s.oppRm;
+  const oTotal=s.owin+s.iferc+s.iuferc+s.rm+s.df;
+  const grand=pTotal+oTotal||1;
+
+  function seg(cls,val,total,label){
+    if(!val||!total)return'';
+    const pct=Math.round(val/total*100);
+    const w=Math.round(val/grand*100);
+    return`<div class="stack-seg seg-${cls}" style="flex:${val}" title="${label}: ${val} (${pct}%)">${val>=2?`<span>${val}</span>`:''}</div>`;
+  }
+
+  c.innerHTML=`<div class="stack-chart">
+    <div class="stack-row">
+      <div class="stack-label">${pn} — ${pTotal} pts won</div>
+      <div class="stack-bars">
+        ${seg('ace',s.ace,pTotal,'Aces')}
+        ${seg('win',s.iwin,pTotal,'Winners')}
+        ${seg('oufErr',s.ouferc,pTotal,'Opp Unforced Errors')}
+        ${seg('ofErr',s.oferc,pTotal,'Opp Forced Errors')}
+        ${seg('orm',s.oppRm,pTotal,'Opp Return Miss')}
+        ${!pTotal?'<div class="stack-seg seg-other" style="flex:1"><span>No data</span></div>':''}
+      </div>
+      <div class="stack-legend">
+        ${s.ace?`<div class="legend-item"><div class="legend-dot" style="background:#1a4be8"></div>Ace ×${s.ace}</div>`:''}
+        ${s.iwin?`<div class="legend-item"><div class="legend-dot" style="background:#3d7a00"></div>Winner ×${s.iwin}</div>`:''}
+        ${s.ouferc?`<div class="legend-item"><div class="legend-dot" style="background:#6b0f0f"></div>Opp UFE ×${s.ouferc}</div>`:''}
+        ${s.oferc?`<div class="legend-item"><div class="legend-dot" style="background:#a01a1a"></div>Opp FE ×${s.oferc}</div>`:''}
+        ${s.oppRm?`<div class="legend-item"><div class="legend-dot" style="background:#92400e"></div>Opp Ret Miss ×${s.oppRm}</div>`:''}
+      </div>
+    </div>
+    <div style="height:1px;background:var(--border)"></div>
+    <div class="stack-row">
+      <div class="stack-label">${os} — ${oTotal} pts won</div>
+      <div class="stack-bars">
+        ${seg('owin',s.owin,oTotal,'Opp Winners')}
+        ${seg('ufErr',s.iuferc,oTotal,'Player Unforced Errors')}
+        ${seg('fErr',s.iferc,oTotal,'Player Forced Errors')}
+        ${seg('rm',s.rm,oTotal,'Player Return Miss')}
+        ${seg('df',s.df,oTotal,'Double Faults')}
+        ${!oTotal?'<div class="stack-seg seg-other" style="flex:1"><span>No data</span></div>':''}
+      </div>
+      <div class="stack-legend">
+        ${s.owin?`<div class="legend-item"><div class="legend-dot" style="background:#5a9e2f"></div>Opp Winner ×${s.owin}</div>`:''}
+        ${s.iuferc?`<div class="legend-item"><div class="legend-dot" style="background:#c92a18"></div>UFE ×${s.iuferc}</div>`:''}
+        ${s.iferc?`<div class="legend-item"><div class="legend-dot" style="background:#e85a45"></div>Forced Err ×${s.iferc}</div>`:''}
+        ${s.rm?`<div class="legend-item"><div class="legend-dot" style="background:#d97706"></div>Ret Miss ×${s.rm}</div>`:''}
+        ${s.df?`<div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div>DF ×${s.df}</div>`:''}
+      </div>
+    </div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.5;border-top:1px solid var(--border);padding-top:8px;">
+      The larger ${pn} stack vs ${os} stack = the margin of control. 
+      Shorten the red (UFE/FE/RM/DF) to flip close matches.
+    </div>
+  </div>`;
+}
 
 // ── SUMMARY ──
 function endMatch(){if(!M.games.length){showToast('Log at least one game first');return}buildSummary();showScreen('summary');saveMatch();clearAutoSave()}
@@ -823,8 +925,25 @@ function buildSummary(){
   document.getElementById('sum-title').textContent=pn+' '+M.isaacSets+'–'+M.oppSets+' '+os;
   const fmtLabel=(FORMATS[M.setup.format||'mtb']||FORMATS.mtb).label+(M.setup.noAd?' · No-Ad':'');
   document.getElementById('sum-meta').textContent=M.setup.date+' · '+M.setup.level+' '+M.setup.round+' · '+M.setup.court+' '+M.setup.surface+' · '+fmtLabel+' · '+(M.setup.trackingMode==='deep'?'Deep Track':'Quick Track');
-  let tot=0,ipts=0,ierr=0,oerr=0,iwin=0,owin=0,s1=0,s2=0,df=0,ace=0,igw=0,ld=0,rm=0,naCount=0;
-  M.games.forEach(g=>{if(g.winner==='isaac')igw++;if(g.leadDisengaged)ld++;g.points.forEach(p=>{tot++;if(p.na){naCount++;return}if(p.outcome==='IE'||p.outcome==='OM')ipts++;if(p.outcome==='IM')ierr++;if(p.outcome==='OM')oerr++;if(p.outcome==='IE')iwin++;if(p.outcome==='OE')owin++;if(p.server==='isaac'){if(p.serve===1)s1++;else s2++;if(p.serveResult==='df')df++;if(p.serveResult==='ace')ace++}if(p.server==='opp'&&p.returnResult==='miss')rm++})});
+  let tot=0,ipts=0,ierr=0,oerr=0,iferc=0,iuferc=0,oferc=0,ouferc=0,iwin=0,owin=0,s1=0,s2=0,df=0,ace=0,igw=0,ld=0,rm=0,oppRm=0,naCount=0;
+  M.games.forEach(g=>{
+    if(g.winner==='isaac')igw++;if(g.leadDisengaged)ld++;
+    g.points.forEach(p=>{
+      tot++;if(p.na){naCount++;return}
+      if(p.outcome==='IE'||p.outcome==='OM')ipts++;
+      if(p.outcome==='IM'){ierr++;if(p.errorType==='forced')iferc++;else if(p.errorType==='unforced')iuferc++}
+      if(p.outcome==='OE'){oerr++;if(p.errorType==='forced')oferc++;else if(p.errorType==='unforced')ouferc++}
+      if(p.outcome==='IE')iwin++;if(p.outcome==='OE')owin++;
+      if(p.oppReturnMiss)oppRm++;
+      if(p.server==='opp'&&p.returnResult==='miss')rm++;
+      if(p.server==='isaac'){
+        // Only count the serve that actually ended the point
+        const terminal=p.serveResult==='ace'||p.serveResult==='df'||p.serveResult==='in'||p.serveResult==='opp-return-miss';
+        if(terminal){if(p.serve===1)s1++;else s2++}
+        if(p.serveResult==='df')df++;if(p.serveResult==='ace')ace++;
+      }
+    });
+  });
   const deep=M.setup.trackingMode==='deep';
   const gamesWithC=M.games.filter(g=>g.composure!==null&&g.composure!==99);
   const gamesWithI=M.games.filter(g=>g.intensity!==null&&g.intensity!==99);
@@ -832,16 +951,20 @@ function buildSummary(){
   const avgI=deep&&gamesWithI.length>0?(gamesWithI.reduce((a,g)=>a+g.intensity,0)/gamesWithI.length).toFixed(1):null;
   const tracked=tot-naCount;
   const ptPct=tracked>0?Math.round(ipts/tracked*100):0,gPct=M.games.length>0?Math.round(igw/M.games.length*100):0;
+  const hasForced=iferc+iuferc+oferc+ouferc>0;
   document.getElementById('stat-grid').innerHTML=`
     <div class="stat-card"><div class="stat-lbl">Points Won</div><div class="stat-val">${ptPct}%</div><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${ptPct}%"></div></div><span class="bar-pct">${ipts}/${tracked}</span></div>${naCount>0?`<div class="stat-sub">${naCount} pts N/A</div>`:''}</div>
     <div class="stat-card"><div class="stat-lbl">Games Won</div><div class="stat-val">${gPct}%</div><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${gPct}%"></div></div><span class="bar-pct">${igw}/${M.games.length}</span></div></div>
     ${deep&&avgC!==null?`<div class="stat-card"><div class="stat-lbl">Avg Composure</div><div class="stat-val" style="color:var(--blue)">${avgC}</div><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${Math.max(0,(parseFloat(avgC)+1)/2*100)}%;background:var(--blue)"></div></div><span class="bar-pct">±1</span></div></div>`:''}
     ${deep&&avgI!==null?`<div class="stat-card"><div class="stat-lbl">Avg Intensity</div><div class="stat-val" style="color:var(--warn)">${avgI}</div><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${Math.max(0,(parseFloat(avgI)+1)/2*100)}%;background:var(--warn)"></div></div><span class="bar-pct">±1</span></div></div>`:''}
-    <div class="stat-card"><div class="stat-lbl">${pn} Errors</div><div class="stat-val" style="color:var(--opp)">${ierr}</div><div class="stat-sub">Opp errors: ${oerr}</div></div>
+    <div class="stat-card"><div class="stat-lbl">${pn} Errors</div><div class="stat-val" style="color:var(--opp)">${ierr}</div><div class="stat-sub">${hasForced?`Forced: ${iferc} · Unforced: ${iuferc}`:'Opp errors: '+oerr}</div></div>
+    <div class="stat-card"><div class="stat-lbl">Opp Errors</div><div class="stat-val" style="color:var(--player)">${oerr}</div><div class="stat-sub">${hasForced?`Forced: ${oferc} · Unforced: ${ouferc}`:'Player winners: '+iwin}</div></div>
     <div class="stat-card"><div class="stat-lbl">${pn} Winners</div><div class="stat-val">${iwin}</div><div class="stat-sub">Opp winners: ${owin}</div></div>
-    <div class="stat-card"><div class="stat-lbl">Serve · ${pn}</div><div class="stat-val">${ace}<span style="font-size:15px;color:var(--muted);font-weight:600"> ace</span></div><div class="stat-sub">DF: ${df} · 1st: ${s1} · 2nd: ${s2}</div></div>
-    <div class="stat-card"><div class="stat-lbl">Return Errors</div><div class="stat-val" style="color:${rm>4?'var(--opp)':'var(--ink)'}">${rm}</div><div class="stat-sub">missed returns</div></div>
+    <div class="stat-card"><div class="stat-lbl">Serve · ${pn}</div><div class="stat-val">${ace}<span style="font-size:15px;color:var(--muted);font-weight:600"> ace</span></div><div class="stat-sub">DF: ${df} · 1st srv pts: ${s1} · 2nd: ${s2}</div></div>
+    <div class="stat-card"><div class="stat-lbl">Player Return Miss</div><div class="stat-val" style="color:${rm>4?'var(--opp)':'var(--ink)'}">${rm}</div><div class="stat-sub">Opp return miss: ${oppRm}</div></div>
     <div class="stat-card full"><div class="stat-lbl">Lead Disengagement</div><div class="stat-val" style="color:${ld>2?'var(--opp)':ld>0?'var(--warn)':'var(--player)'}">${ld}</div><div class="stat-sub">games where ${pn} led then lost</div></div>`;
+  // Stacked comparison chart
+  renderStackedComparison(pn,os,{iwin,owin,ierr,oerr,iferc,iuferc,oferc,ouferc,ace,df,rm,oppRm,igw,s1,s2});
   const gbg=document.getElementById('gbg-list');gbg.innerHTML='';
   M.games.forEach(g=>{const div=document.createElement('div');div.className='gbg-row';const wc=g.winner==='isaac'?'player':'opp',wl=g.winner==='isaac'?pn:os;const cl=deep?(g.composure===99?'N/A':g.composure===1?'+1':g.composure===-1?'−1':'0'):'—';const il=deep?(g.intensity===99?'N/A':g.intensity===1?'+1':g.intensity===-1?'−1':'0'):'—';div.innerHTML=`<span class="gbg-gn">S${g.setNum} G${g.gameNum}</span><span class="gbg-win ${wc}">${wl}${g.leadDisengaged?' ⚑':''}</span><span class="gbg-c">C${cl}</span><span class="gbg-i">I${il}</span>`;gbg.appendChild(div)});
   document.getElementById('sc-composure-card').style.display=deep?'block':'none';
@@ -851,12 +974,28 @@ function buildSummary(){
 
 // ── EXPORT ──
 function buildPayload(){
-  let tot=0,ipts=0,ierr=0,oerr=0,iwin=0,owin=0,s1=0,s2=0,df=0,ace=0,igw=0,ld=0,rm=0,naCount=0;
-  M.games.forEach(g=>{if(g.winner==='isaac')igw++;if(g.leadDisengaged)ld++;g.points.forEach(p=>{tot++;if(p.na){naCount++;return}if(p.outcome==='IE'||p.outcome==='OM')ipts++;if(p.outcome==='IM')ierr++;if(p.outcome==='OM')oerr++;if(p.outcome==='IE')iwin++;if(p.outcome==='OE')owin++;if(p.server==='isaac'){if(p.serve===1)s1++;else s2++;if(p.serveResult==='df')df++;if(p.serveResult==='ace')ace++}if(p.server==='opp'&&p.returnResult==='miss')rm++})});
+  let tot=0,ipts=0,ierr=0,oerr=0,iferc=0,iuferc=0,oferc=0,ouferc=0,iwin=0,owin=0,s1=0,s2=0,df=0,ace=0,igw=0,ld=0,rm=0,oppRm=0,naCount=0;
+  M.games.forEach(g=>{
+    if(g.winner==='isaac')igw++;if(g.leadDisengaged)ld++;
+    g.points.forEach(p=>{
+      tot++;if(p.na){naCount++;return}
+      if(p.outcome==='IE'||p.outcome==='OM')ipts++;
+      if(p.outcome==='IM'){ierr++;if(p.errorType==='forced')iferc++;else if(p.errorType==='unforced')iuferc++}
+      if(p.outcome==='OE'){oerr++;if(p.errorType==='forced')oferc++;else if(p.errorType==='unforced')ouferc++}
+      if(p.outcome==='IE')iwin++;if(p.outcome==='OE')owin++;
+      if(p.oppReturnMiss)oppRm++;
+      if(p.server==='opp'&&p.returnResult==='miss')rm++;
+      if(p.server==='isaac'){
+        const terminal=p.serveResult==='ace'||p.serveResult==='df'||p.serveResult==='in'||p.serveResult==='opp-return-miss';
+        if(terminal){if(p.serve===1)s1++;else s2++}
+        if(p.serveResult==='df')df++;if(p.serveResult==='ace')ace++;
+      }
+    });
+  });
   const tracked=tot-naCount;
   const gamesWithC=M.games.filter(g=>g.composure!==null&&g.composure!==99);
   const gamesWithI=M.games.filter(g=>g.intensity!==null&&g.intensity!==99);
-  return{playerName:M.setup.playerName||'Player',trackingMode:M.setup.trackingMode||'quick',date:M.setup.date,level:M.setup.level,round:M.setup.round,surface:M.setup.surface,court:M.setup.court,format:M.setup.format||'mtb',noAd:M.setup.noAd||false,opp:M.setup.opp,oppShort:M.setup.oppShort||M.setup.opp,oppWtn:M.setup.oppWtn,oppUtr:M.setup.oppUtr,isaacSets:M.isaacSets,oppSets:M.oppSets,totalGames:M.games.length,isaacGamesWon:igw,totalPoints:tot,trackedPoints:tracked,naPoints:naCount,isaacPoints:ipts,pointWinPct:tracked>0?Math.round(ipts/tracked*100):0,isaacErrors:ierr,oppErrors:oerr,isaacWinners:iwin,oppWinners:owin,aces:ace,doubleFaults:df,returnMisses:rm,firstServePoints:s1,secondServePoints:s2,avgComposure:gamesWithC.length>0?(gamesWithC.reduce((a,g)=>a+g.composure,0)/gamesWithC.length).toFixed(2):'N/A',avgIntensity:gamesWithI.length>0?(gamesWithI.reduce((a,g)=>a+g.intensity,0)/gamesWithI.length).toFixed(2):'N/A',leadDisengagement:ld,games:M.games};
+  return{playerName:M.setup.playerName||'Player',trackingMode:M.setup.trackingMode||'quick',date:M.setup.date,level:M.setup.level,round:M.setup.round,surface:M.setup.surface,court:M.setup.court,format:M.setup.format||'mtb',noAd:M.setup.noAd||false,opp:M.setup.opp,oppShort:M.setup.oppShort||M.setup.opp,oppWtn:M.setup.oppWtn,oppUtr:M.setup.oppUtr,isaacSets:M.isaacSets,oppSets:M.oppSets,totalGames:M.games.length,isaacGamesWon:igw,totalPoints:tot,trackedPoints:tracked,naPoints:naCount,isaacPoints:ipts,pointWinPct:tracked>0?Math.round(ipts/tracked*100):0,isaacErrors:ierr,playerForcedErrors:iferc,playerUnforcedErrors:iuferc,oppErrors:oerr,oppForcedErrors:oferc,oppUnforcedErrors:ouferc,isaacWinners:iwin,oppWinners:owin,aces:ace,doubleFaults:df,returnMisses:rm,oppReturnMisses:oppRm,firstServePoints:s1,secondServePoints:s2,avgComposure:gamesWithC.length>0?(gamesWithC.reduce((a,g)=>a+g.composure,0)/gamesWithC.length).toFixed(2):'N/A',avgIntensity:gamesWithI.length>0?(gamesWithI.reduce((a,g)=>a+g.intensity,0)/gamesWithI.length).toFixed(2):'N/A',leadDisengagement:ld,games:M.games};
 }
 function copyReport(){const p=buildPayload(),os=p.oppShort||p.opp,pn=p.playerName,fmtLabel=(FORMATS[p.format||'mtb']||FORMATS.mtb).label,mode=p.trackingMode==='deep'?'Deep Track':'Quick Track';let t='RAQTRACK MATCH REPORT\n'+p.date+' · '+p.level+' '+p.round+' · '+p.court+' '+p.surface+' · '+fmtLabel+(p.noAd?' No-Ad':'')+' · '+mode+'\n'+pn+' vs '+p.opp+' — '+p.isaacSets+'–'+p.oppSets+'\n\nGAME LOG\n';M.games.forEach(g=>{const w=g.winner==='isaac'?pn:os,ci=p.trackingMode==='deep'?' | C:'+(g.composure===99?'N/A':g.composure)+' I:'+(g.intensity===99?'N/A':g.intensity):'';t+='S'+g.setNum+'G'+g.gameNum+': '+w+ci+(g.leadDisengaged?' ⚑':'')+'\n'});t+='\nSTATS\nTracked Points: '+p.isaacPoints+'/'+p.trackedPoints+' ('+p.pointWinPct+'%)'+(p.naPoints>0?' · '+p.naPoints+' N/A':'')+'\nErrors: '+p.isaacErrors+' | Winners: '+p.isaacWinners+'\nAces: '+p.aces+' | DFs: '+p.doubleFaults+' | Return Errors: '+p.returnMisses+'\n';if(p.trackingMode==='deep')t+='Avg Composure: '+p.avgComposure+' | Avg Intensity: '+p.avgIntensity+'\n';t+='Lead Disengagement: '+p.leadDisengagement+' games\n\nTracked with RaqTrack · Bop Games\n';navigator.clipboard.writeText(t).then(()=>showToast('Copied!')).catch(()=>showToast('Copy failed'))}
 async function exportToSheets(){let url=localStorage.getItem('raqtrack_sheet_url')||'';if(!url){url=prompt('Paste your Apps Script Web App URL:');if(!url)return;localStorage.setItem('raqtrack_sheet_url',url.trim())}const btn=document.getElementById('sheets-btn');btn.textContent='Sending…';btn.disabled=true;try{await fetch(url.trim(),{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(buildPayload())});showToast('Saved to Sheets ✓');btn.textContent='Saved ✓';setTimeout(()=>{btn.textContent='→ Sheets';btn.disabled=false},3000)}catch(e){showToast('Check URL');btn.textContent='→ Sheets';btn.disabled=false}}
@@ -869,7 +1008,7 @@ function loadPastMatches(){try{const ms=JSON.parse(localStorage.getItem('raqtrac
 // ── NAV ──
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
-function newMatch(){clearAutoSave();M=freshMatch();trackingMode='quick';courtType='outdoor';surfaceType='hard';selectedLevel='L7';selectedRound='R1';selectedFormat='mtb';noAd=false;setCourt('outdoor');setSurface('hard');setTrackingMode('quick');setLevel('L7');setRound('R1');setFormat('mtb');updateFormatsForLevel('L7');document.getElementById('noad-toggle').className='tgl';document.getElementById('noad-indicator').textContent='OFF';document.getElementById('noad-indicator').style.color='var(--muted)';['player-name','opp-first','opp-last','opp-wtn','opp-utr'].forEach(id=>document.getElementById(id).value='');document.getElementById('point-strip').innerHTML='';document.getElementById('game-log').innerHTML='';document.getElementById('game-log-section').style.display='none';document.getElementById('live-charts').style.display='none';document.querySelectorAll('.zone').forEach(z=>z.className='zone');lastSnapshot=null;showUndo(false);checkResume();loadPastMatches();showScreen('setup')}
+function newMatch(){clearAutoSave();M=freshMatch();trackingMode='quick';courtType='outdoor';surfaceType='hard';selectedLevel='L7';selectedRound='R1';selectedFormat='mtb';noAd=false;setCourt('outdoor');setSurface('hard');setTrackingMode('quick');setLevel('L7');setRound('R1');setFormat('mtb');updateFormatsForLevel('L7');document.getElementById('noad-toggle').className='tgl';document.getElementById('noad-indicator').textContent='OFF';document.getElementById('noad-indicator').style.color='var(--muted)';['player-name','opp-first','opp-last','opp-wtn','opp-utr'].forEach(id=>document.getElementById(id).value='');document.getElementById('point-strip').innerHTML='';document.getElementById('game-log').innerHTML='';document.getElementById('game-log-section').style.display='none';document.getElementById('live-charts').style.display='none';document.querySelectorAll('.zone').forEach(z=>z.className='zone');undoStack=[];showUndo(false);checkResume();loadPastMatches();showScreen('setup')}
 
 // ── INIT ──
 M=freshMatch();
