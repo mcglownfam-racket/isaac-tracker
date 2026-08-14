@@ -366,6 +366,10 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
       <button class="sum-nav-btn" onclick="showPage(1)">Momentum</button>
       <button class="sum-nav-btn" onclick="showPage(2)">Serve & Return</button>
     </div>
+    <div style="display:flex;gap:8px;margin-top:9px">
+      <button class="btn-primary" style="flex:1;font-size:15px;padding:11px" onclick="newMatch()">← New Match</button>
+      <button class="btn-secondary" style="flex:1;font-size:15px;padding:11px" onclick="shareReport()">Share Report</button>
+    </div>
   </div>
 
   <div class="sum-page active" id="page-0">
@@ -376,7 +380,6 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
       <button class="btn-secondary" onclick="copyReport()">Copy Report</button>
       <button class="btn-secondary" id="sheets-btn" onclick="exportToSheets()">→ Sheets</button>
     </div>
-    <button class="btn-primary" onclick="newMatch()">New Match</button>
     <div style="text-align:center;margin-top:2px">
       <button onclick="resetSheetUrl()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;padding:10px 20px;width:100%">reset sheet url</button>
     </div>
@@ -972,6 +975,228 @@ function newMatch(){
   document.getElementById('quick-resolve-wrap').style.display='none';
   setLevel('L5');setSurface('Hard');
   loadPastMatches();showScreen('setup');
+}
+
+function shareReport() {
+  const a = aggregateStats();
+  const opp = M.setup.opp, os = opp.split(',')[0];
+  const result = M.isaacSets > M.oppSets ? 'WIN' : 'LOSS';
+  const iTotal = a.iF + a.iU, oTotal = a.oF + a.oU;
+  const iRatio = iTotal > 0 ? (a.iW / iTotal).toFixed(2) : '—';
+  const oRatio = oTotal > 0 ? (a.oW / oTotal).toFixed(2) : '—';
+
+  // Build momentum SVG data for report
+  const vals = [0]; let run = 0;
+  M.games.forEach(g => g.points.forEach(p => {
+    if (!p.outcome || ['FAULT_ONLY','LET'].includes(p.outcome)) return;
+    if (iWins(p.outcome)) run++; else run--;
+    vals.push(run);
+  }));
+
+  // GBG rows
+  let gbgRows = '';
+  M.games.forEach(g => {
+    const rp = g.points.filter(p => p.outcome && !['FAULT_ONLY','LET'].includes(p.outcome));
+    const iE = rp.filter(p => ['OF','OU','DF'].includes(p.outcome)).length;
+    const oE = rp.filter(p => ['IF','IU'].includes(p.outcome)).length;
+    const iWn = rp.filter(p => ['IW','ACE'].includes(p.outcome)).length;
+    const wLbl = g.winner === 'isaac' ? 'Isaac' : os;
+    const wColor = g.winner === 'isaac' ? '#1a7a3a' : '#c0392b';
+    gbgRows += `<tr>
+      <td>G${g.number}</td>
+      <td style="color:${wColor};font-weight:700">${wLbl}${g.leadDisengaged ? ' ⚑' : ''}</td>
+      <td>${iWn}</td>
+      <td>${iE} v ${oE}</td>
+    </tr>`;
+  });
+
+  // Momentum inline SVG for report
+  const mW = 560, mH = 120;
+  const pad = {l:26,r:12,t:10,b:14};
+  const iW2 = mW - pad.l - pad.r, iH2 = mH - pad.t - pad.b;
+  const mn = Math.min(...vals,0), mx = Math.max(...vals,0), rng = mx - mn || 1;
+  const toX = i => pad.l + (i / (vals.length - 1)) * iW2;
+  const toY = v => pad.t + (1 - (v - mn) / rng) * iH2;
+  const zY = toY(0);
+  const last = vals[vals.length - 1];
+  let mPath = `M${toX(0)},${toY(vals[0])}`;
+  for (let i = 1; i < vals.length; i++) mPath += ` L${toX(i)},${toY(vals[i])}`;
+  let aPath = mPath + ` L${toX(vals.length-1)},${zY} L${toX(0)},${zY} Z`;
+  const mColor = last >= 0 ? '#1a7a3a' : '#c0392b';
+  const mFill = last >= 0 ? 'rgba(26,122,58,.13)' : 'rgba(192,57,43,.13)';
+
+  // Serve arc inline SVG
+  const sg = a.serveGames;
+  let serveArcSVG = '<p style="color:#9a8878;font-size:12px">Not enough serve games</p>';
+  if (sg.length >= 2) {
+    const sW = 560, sH = 90;
+    const sp = {l:24,r:16,t:10,b:16};
+    const siW = sW-sp.l-sp.r, siH = sH-sp.t-sp.b;
+    const sv = sg.map(g => g.score);
+    const smn = Math.min(...sv,0), smx = Math.max(...sv,1), srng = smx-smn||1;
+    const stX = i => sp.l+(i/(sv.length-1))*siW, stY = v => sp.t+(1-(v-smn)/srng)*siH;
+    const szY = stY(0);
+    let sd = `M${stX(0)},${stY(sv[0])}`;
+    for (let i = 1; i < sv.length; i++) sd += ` L${stX(i)},${stY(sv[i])}`;
+    let sdots = '';
+    sv.forEach((v,i) => { sdots += `<circle cx="${stX(i)}" cy="${stY(v)}" r="3" fill="#c85a1a"/><text x="${stX(i)}" y="${sH-2}" text-anchor="middle" fill="#9a8878" font-size="8" font-family="monospace">G${sg[i].num}</text>`; });
+    serveArcSVG = `<svg viewBox="0 0 ${sW} ${sH}" style="width:100%;overflow:visible">
+      <line x1="${sp.l}" y1="${szY}" x2="${sp.l+siW}" y2="${szY}" stroke="#e0d8cc" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="${sp.l-4}" y="${szY+4}" text-anchor="end" fill="#9a8878" font-size="9" font-family="monospace">0</text>
+      <path d="${sd}" fill="none" stroke="#c85a1a" stroke-width="2" stroke-linejoin="round"/>
+      ${sdots}
+    </svg>`;
+  }
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Isaac Match Report — ${os} ${M.setup.date}</title>
+<style>
+  body{font-family:'Helvetica Neue',Arial,sans-serif;background:#faf6f0;color:#1a1410;margin:0;padding:0}
+  .header{background:#1a1410;color:#faf6f0;padding:24px 28px 20px}
+  .header h1{font-size:28px;font-weight:800;margin:0 0 4px}
+  .header .result{font-size:42px;font-weight:900;color:${result==='WIN'?'#c8f135':'#f13535'};margin:0}
+  .header .meta{font-size:12px;color:#9a8878;font-family:monospace;margin-top:6px}
+  .body{padding:20px 24px;display:flex;flex-direction:column;gap:20px}
+  .section-title{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#9a8878;font-family:monospace;margin-bottom:8px;border-bottom:1px solid #e0d8cc;padding-bottom:4px}
+  .card{background:#fff;border:1px solid #e0d8cc;border-radius:10px;padding:16px}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .stat{background:#fff;border:1px solid #e0d8cc;border-radius:8px;padding:12px}
+  .stat-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#9a8878;font-family:monospace;margin-bottom:4px}
+  .stat-val{font-size:22px;font-weight:800;color:#c85a1a}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#9a8878;font-family:monospace;padding:6px 8px;text-align:center;border-bottom:1px solid #e0d8cc}
+  th.left{text-align:left}
+  td{font-size:13px;font-weight:600;padding:7px 8px;text-align:center;border-bottom:1px solid #f0ebe3}
+  td.label{font-size:11px;font-weight:400;color:#9a8878;text-align:left;font-family:monospace}
+  td.good{color:#1a7a3a} td.bad{color:#c0392b} td.neu{color:#1a1410}
+  .lead-dis{background:#fff8ed;border:1.5px solid #c87d1a;border-radius:10px;padding:14px}
+  .lead-dis-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#c87d1a;font-family:monospace;margin-bottom:6px}
+  .footer{background:#f0ebe3;padding:14px 24px;font-size:11px;color:#9a8878;font-family:monospace;text-align:center;margin-top:10px}
+  .page-break{page-break-before:always;padding-top:20px}
+  @media print{.page-break{page-break-before:always}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="result">Isaac ${M.isaacSets}–${M.oppSets} ${os}</div>
+  <h1>${result}</h1>
+  <div class="meta">${M.setup.date} · ${M.setup.level} ${M.setup.round} · ${M.setup.surface} · vs ${opp} · WTN ${M.setup.oppWtn} / UTR ${M.setup.oppUtr}</div>
+</div>
+
+<div class="body">
+
+  <!-- PAGE 1: OVERVIEW -->
+  <div>
+    <div class="section-title">Overview</div>
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-label">Points Won</div><div class="stat-val">${pct(a.ipts,a.total)}%</div><div style="font-size:11px;color:#9a8878">${a.ipts} of ${a.total}</div></div>
+      <div class="stat"><div class="stat-label">Games Won</div><div class="stat-val">${pct(a.iGames,M.games.length)}%</div><div style="font-size:11px;color:#9a8878">${a.iGames} of ${M.games.length}</div></div>
+      <div class="stat"><div class="stat-label">W:E Ratio</div><div class="stat-val">${iRatio}</div><div style="font-size:11px;color:#9a8878">vs ${oRatio} opp</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Head to Head</div>
+    <table>
+      <tr><th class="left">Stat</th><th>Isaac</th><th>${os}</th></tr>
+      <tr><td class="label">Winners</td><td class="good">${a.iW}</td><td class="bad">${a.oW}</td></tr>
+      <tr><td class="label">Forced Errors</td><td class="bad">${a.iF}</td><td class="good">${a.oF}</td></tr>
+      <tr><td class="label">Unforced Errors</td><td class="bad">${a.iU}</td><td class="good">${a.oU}</td></tr>
+      <tr><td class="label">Total Errors</td><td class="bad">${iTotal}</td><td class="good">${oTotal}</td></tr>
+      <tr><td class="label">W:E Ratio</td><td class="${parseFloat(iRatio)>=parseFloat(oRatio)?'good':'bad'}">${iRatio}</td><td class="${parseFloat(oRatio)>=parseFloat(iRatio)?'good':'bad'}">${oRatio}</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Game by Game</div>
+    <table>
+      <tr><th class="left">Game</th><th>Winner</th><th>Isaac W</th><th>Errors</th></tr>
+      ${gbgRows}
+    </table>
+    <div style="font-size:11px;color:#9a8878;margin-top:8px;font-family:monospace">⚑ = led in points then lost the game</div>
+  </div>
+
+  <!-- PAGE 2: MOMENTUM -->
+  <div class="page-break">
+    <div class="section-title">Match Momentum — Running Point Differential</div>
+    <div class="card">
+      <svg viewBox="0 0 ${mW} ${mH}" style="width:100%;overflow:visible">
+        <line x1="${pad.l}" y1="${zY}" x2="${pad.l+iW2}" y2="${zY}" stroke="#e0d8cc" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="${pad.l-4}" y="${zY+4}" text-anchor="end" fill="#9a8878" font-size="9" font-family="monospace">0</text>
+        <path d="${aPath}" fill="${mFill}"/>
+        <path d="${mPath}" fill="none" stroke="${mColor}" stroke-width="2" stroke-linejoin="round"/>
+        <text x="${mW-4}" y="${toY(last)+4}" text-anchor="end" fill="${mColor}" font-size="11" font-family="monospace" font-weight="700">${last>0?'+':''}${last}</text>
+      </svg>
+      <div style="font-size:11px;color:#9a8878;font-family:monospace;margin-top:6px">
+        <span style="color:${mColor}">●</span> ${last>=0?'Isaac finished ahead':'Opponent finished ahead'} by ${Math.abs(last)} point${Math.abs(last)!==1?'s':''}
+      </div>
+    </div>
+  </div>
+
+  ${a.leadDis > 0 ? `<div class="lead-dis">
+    <div class="lead-dis-title">⚑ Lead Disengagement — ${a.leadDis} game${a.leadDis>1?'s':''}</div>
+    <div style="font-size:13px;line-height:1.6">${M.games.filter(g=>g.leadDisengaged).map(g=>`Game ${g.number}`).join(', ')} — Isaac led in points then lost these games. Pattern to review with coach.</div>
+  </div>` : ''}
+
+  <div class="card">
+    <div class="section-title">Error Breakdown</div>
+    <table>
+      <tr><th class="left">Error Type</th><th>Isaac</th><th>${os}</th></tr>
+      <tr><td class="label">Forced Errors</td><td class="bad">${a.iF}</td><td class="good">${a.oF}</td></tr>
+      <tr><td class="label">Unforced Errors</td><td class="bad">${a.iU}</td><td class="good">${a.oU}</td></tr>
+      <tr><td class="label">UE per game</td><td class="bad">${(a.iU/Math.max(M.games.length,1)).toFixed(1)}</td><td class="good">${(a.oU/Math.max(M.games.length,1)).toFixed(1)}</td></tr>
+    </table>
+  </div>
+
+  <!-- PAGE 3: SERVE & RETURN -->
+  <div class="page-break">
+    <div class="section-title">Serve & Return</div>
+    <div class="card">
+      <table>
+        <tr><th class="left">Serve Stat</th><th>Isaac</th><th>${os}</th></tr>
+        <tr><td class="label">1st Serve In</td><td class="neu">${a.i_s1}</td><td class="neu">${a.o_s1}</td></tr>
+        <tr><td class="label">Pts Won on 1st</td><td class="good">${a.i_s1w} (${pct(a.i_s1w,a.i_s1)}%)</td><td class="neu">${a.o_s1w} (${pct(a.o_s1w,a.o_s1)}%)</td></tr>
+        <tr><td class="label">2nd Serve In</td><td class="neu">${a.i_s2}</td><td class="neu">${a.o_s2}</td></tr>
+        <tr><td class="label">Pts Won on 2nd</td><td class="good">${a.i_s2w} (${pct(a.i_s2w,a.i_s2)}%)</td><td class="neu">${a.o_s2w} (${pct(a.o_s2w,a.o_s2)}%)</td></tr>
+        <tr><td class="label">Aces</td><td class="good">${a.i_aces}</td><td class="neu">—</td></tr>
+        <tr><td class="label">Double Faults</td><td class="bad">${a.i_df}</td><td class="bad">${a.o_df}</td></tr>
+        <tr><td class="label">Lets</td><td class="neu">${a.i_lets}</td><td class="neu">${a.o_lets}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Isaac Serve Score Arc</div>
+    ${serveArcSVG}
+    <div style="font-size:11px;color:#9a8878;font-family:monospace;margin-top:6px">Ace +3 · 1st In +2 · 2nd In +1 · DF −3 (cumulative per serve game)</div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Return Summary</div>
+    <div style="font-size:13px;line-height:1.9">
+      Return points won: <strong>${a.retWon}/${a.retPts} (${pct(a.retWon,a.retPts)}%)</strong><br>
+      Opp forced errors on serve: <strong>${a.oF}</strong><br>
+      Opp unforced errors on serve: <strong>${a.oU}</strong><br>
+      Opp double faults: <strong>${a.o_df}</strong>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">Isaac Match Tracker · ${M.setup.date} · Generated automatically</div>
+</body>
+</html>`;
+
+  // Open in new tab
+  const blob = new Blob([html], {type: 'text/html'});
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  showToast('Report opened — share or print from browser');
 }
 
 // INIT
