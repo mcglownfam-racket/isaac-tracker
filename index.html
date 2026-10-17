@@ -259,6 +259,7 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
 .ia-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
 .ia-kpi{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:5px 3px 4px;text-align:center;min-width:0}
 .ia-kpi .k-l{font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;line-height:1.2;white-space:nowrap}
+.ia-kpi .k-d{font-size:9px;line-height:1.15;color:var(--muted);margin-top:1px;padding:0 2px}
 .ia-kpi .k-v{font-size:22px;font-weight:800;color:var(--accent);line-height:1.1}
 .ia-kpi .k-s{font-size:9px;color:var(--muted);line-height:1.2;margin-top:1px}
 .cmp-table tr.grp th{border-bottom:none;padding-bottom:0;color:var(--text);font-weight:700}
@@ -986,9 +987,9 @@ function endMatch(){if(M.games.length===0){showToast('Log at least one game firs
 function aggregateStats(){
   let total=0,ipts=0,iW=0,oW=0,iF=0,oF=0,iU=0,oU=0;
   // Isaac serve
-  let i_s1=0,i_s2=0,i_s1w=0,i_s2w=0,i_aces=0,i_df=0,i_lets=0;
+  let i_s1=0,i_s2=0,i_s1w=0,i_s2w=0,i_aces=0,i_df=0,i_lets=0,i_df1=0;
   // Opp serve
-  let o_s1=0,o_s2=0,o_s1w=0,o_s2w=0,o_df=0,o_lets=0,o_aces=0;
+  let o_s1=0,o_s2=0,o_s1w=0,o_s2w=0,o_df=0,o_lets=0,o_aces=0,o_df1=0;
   let retPts=0,retWon=0,iGames=0,leadDis=0;
   const serveGames=[];
   let currentOppServe=1; // track per game
@@ -1017,16 +1018,18 @@ function aggregateStats(){
       if(p.outcome==='OU')iU++;if(p.outcome==='IU')oU++;
 
       if(p.server==='isaac'){
-        if(p.outcome==='ACE'){i_aces++;i_s1++;i_s1w++;gSS+=3;}
-        else if(p.outcome==='DF'){i_df++;}
-        else if(p.serve===1){i_s1++;if(iw)i_s1w++;gSS+=iw?2:1;}
-        else{i_s2++;if(iw)i_s2w++;gSS+=iw?1:0;}
+        // Serve score per game: Ace +3, 1st serve in +2, 2nd serve in +1, double fault -3 (matches the chart legend)
+        if(p.outcome==='ACE'){i_aces++;if(p.serve===2){i_s2++;i_s2w++;}else{i_s1++;i_s1w++;}gSS+=3;}
+        else if(p.outcome==='DF'){i_df++;if(p.serve===1)i_df1++;gSS-=3;}
+        else if(p.serve===1){i_s1++;if(iw)i_s1w++;gSS+=2;}
+        else{i_s2++;if(iw)i_s2w++;gSS+=1;}
       } else {
         // opp serving
-        if(p.outcome==='ODF'){o_df++;}
-        else if(p.outcome==='OACE'){o_aces++;o_s1++;}
-        else if(p.serve===1){o_s1++;if(iw)o_s1w++;}
-        else{o_s2++;if(iw)o_s2w++;}
+        // Opp 'Pts won' = points the OPPONENT won on his own serve (so when Isaac does not win the point)
+        if(p.outcome==='ODF'){o_df++;if(p.serve===1)o_df1++;}
+        else if(p.outcome==='OACE'){o_aces++;if(p.serve===2){o_s2++;o_s2w++;}else{o_s1++;o_s1w++;}}
+        else if(p.serve===1){o_s1++;if(!iw)o_s1w++;}
+        else{o_s2++;if(!iw)o_s2w++;}
         retPts++;if(iw)retWon++;
       }
     });
@@ -1042,7 +1045,8 @@ function aggregateStats(){
     if(p.outcome==='FAULT_ONLY'){if(p.server==='isaac')i_s1faults++;else o_s1faults++;}
   }));
 
-  return{total,ipts,iW,oW,iF,oF,iU,oU,i_s1faults,o_s1faults,
+  const i_s1att=i_s1+i_s1faults+i_df1,o_s1att=o_s1+o_s1faults+o_df1; // every double fault includes a missed 1st serve
+  return{total,ipts,iW,oW,iF,oF,iU,oU,i_s1faults,o_s1faults,i_s1att,o_s1att,
     i_s1,i_s2,i_s1w,i_s2w,i_aces,i_df,i_lets,
     o_s1,o_s2,o_s1w,o_s2w,o_df,o_lets,o_aces,
     retPts,retWon,iGames,leadDis,serveGames};
@@ -1097,11 +1101,9 @@ function buildSummary(){
     <tr><td class="label">UE per game</td><td class="bad">${(a.iU/Math.max(M.games.length,1)).toFixed(1)}</td><td class="good">${(a.oU/Math.max(M.games.length,1)).toFixed(1)}</td></tr>`;
 
   // P3 serve table
-  const i_s1in=pct(a.i_s1-0,a.i_s1+a.i_s2+a.i_df); // approximate
-  const o_s1in=pct(a.o_s1-0,a.o_s1+a.o_s2+a.o_df);
   document.getElementById('serve-table').innerHTML=`
     <tr><th class="left">Serve Stat</th><th>Isaac</th><th>${os}</th></tr>
-    <tr><td class="label">1st Serve In</td><td class="neu">${a.i_s1}</td><td class="neu">${a.o_s1}</td></tr>
+    <tr><td class="label">1st Serve In</td><td class="neu">${a.i_s1}/${a.i_s1att} (${pct(a.i_s1,a.i_s1att)}%)</td><td class="neu">${a.o_s1}/${a.o_s1att} (${pct(a.o_s1,a.o_s1att)}%)</td></tr>
     <tr><td class="label">Pts Won on 1st</td><td class="good">${a.i_s1w} (${pct(a.i_s1w,a.i_s1)}%)</td><td class="neu">${a.o_s1w} (${pct(a.o_s1w,a.o_s1)}%)</td></tr>
     <tr><td class="label">2nd Serve In</td><td class="neu">${a.i_s2}</td><td class="neu">${a.o_s2}</td></tr>
     <tr><td class="label">Pts Won on 2nd</td><td class="good">${a.i_s2w} (${pct(a.i_s2w,a.i_s2)}%)</td><td class="neu">${a.o_s2w} (${pct(a.o_s2w,a.o_s2)}%)</td></tr>
@@ -1209,7 +1211,7 @@ function buildInAttack(){
   const lost=t.i.dictate.n===0?'Isaac did not hold Dictate on any tagged point.'
     :`Lost <strong>${t.lost.n}</strong> of ${t.i.dictate.n} Dictate points: ${t.lost.iErr} on his own errors, ${t.lost.oWin} to opponent winners.${t.lost.n>0?' Did he commit, or hold back?':''}`;
   el.innerHTML=
-    `<div class="ia-kpis">${[['Dictate',d.kpis[0].v],['Conversion',d.kpis[1].v],['Steal',d.kpis[2].v],['Build errors',d.kpis[3].v]].map(k=>`<div class="ia-kpi"><div class="k-l">${k[0]}</div><div class="k-v">${k[1]}</div></div>`).join('')}</div>
+    `<div class="ia-kpis">${[['Dictate',d.kpis[0].v,'Points Isaac was in control'],['Conversion',d.kpis[1].v,'Dictate points he won'],['Steal',d.kpis[2].v,'Defend points he won'],['Build errors',d.kpis[3].v,'His errors while in Build']].map(k=>`<div class="ia-kpi"><div class="k-l">${k[0]}</div><div class="k-v">${k[1]}</div><div class="k-d">${k[2]}</div></div>`).join('')}</div>
     <div class="chart-card"><div class="chart-title">By position · at the end of the point</div><table class="cmp-table">${posTable}</table></div>
     <div class="chart-card"><div class="chart-title">Points Isaac won · Isaac ↓ vs ${esc(os)} →</div><table class="cmp-table">${d.gridRows.replace(/<th class="left">[^<]*<\/th>/,'<th class="left"></th>')}</table></div>
     <div class="chart-card ia-missed"><div class="chart-title">Missed Dictates</div><div class="ia-missed-txt">${lost}</div></div>
@@ -1324,7 +1326,7 @@ function showPage(idx){
 function buildPayload(){
   const a=aggregateStats(),ia=inAttackStats();
   const iTotal=a.iF+a.iU+a.i_df,oTotal=a.oF+a.oU+a.o_df; // true totals include double faults (Isaac's/Opp's own service errors)
-  return{date:M.setup.date,level:M.setup.level,round:M.setup.round,surface:M.setup.surface,opp:M.setup.opp,oppWtn:M.setup.oppWtn,oppUtr:M.setup.oppUtr,format:M.setup.format,noAd:M.setup.noAd,isaacSets:M.isaacSets,oppSets:M.oppSets,totalGames:M.games.length,isaacGamesWon:a.iGames,totalPoints:a.total,isaacPoints:a.ipts,pointWinPct:pct(a.ipts,a.total),isaacWinners:a.iW,oppWinners:a.oW,isaacForcedErrors:a.iF,oppForcedErrors:a.oF,isaacUnforcedErrors:a.iU,oppUnforcedErrors:a.oU,isaacTotalErrors:iTotal,oppTotalErrors:oTotal,aces:a.i_aces,oppAces:a.o_aces,doubleFaults:a.i_df,isaacLets:a.i_lets,oppDoubleFaults:a.o_df,oppLets:a.o_lets,isaac1stServeIn:a.i_s1,isaac1stServeWon:a.i_s1w,isaac2ndServeIn:a.i_s2,isaac2ndServeWon:a.i_s2w,opp1stServeIn:a.o_s1,opp1stServeWon:a.o_s1w,opp2ndServeIn:a.o_s2,opp2ndServeWon:a.o_s2w,returnPoints:a.retPts,returnPointsWon:a.retWon,leadDisengagement:a.leadDis,inAttackTaggedPoints:ia.tagged,inAttackTotalPoints:ia.total,isaacDictatePoints:ia.i.dictate.n,isaacDictateWon:ia.i.dictate.w,isaacBuildPoints:ia.i.build.n,isaacBuildWon:ia.i.build.w,isaacBuildErrors:ia.i.build.e,isaacDefendPoints:ia.i.defend.n,isaacDefendWon:ia.i.defend.w,oppDictatePoints:ia.o.dictate.n,oppDictateWon:ia.o.dictate.w,oppDefendPoints:ia.o.defend.n,oppDefendWon:ia.o.defend.w,missedDictates:ia.lost.n,gameLog:M.games.map(g=>`S${g.setN}G${g.number}:${g.winner==='isaac'?'I':'O'}`).join(' ')};
+  return{date:M.setup.date,level:M.setup.level,round:M.setup.round,surface:M.setup.surface,opp:M.setup.opp,oppWtn:M.setup.oppWtn,oppUtr:M.setup.oppUtr,format:M.setup.format,noAd:M.setup.noAd,isaacSets:M.isaacSets,oppSets:M.oppSets,totalGames:M.games.length,isaacGamesWon:a.iGames,totalPoints:a.total,isaacPoints:a.ipts,pointWinPct:pct(a.ipts,a.total),isaacWinners:a.iW,oppWinners:a.oW,isaacForcedErrors:a.iF,oppForcedErrors:a.oF,isaacUnforcedErrors:a.iU,oppUnforcedErrors:a.oU,isaacTotalErrors:iTotal,oppTotalErrors:oTotal,aces:a.i_aces,oppAces:a.o_aces,doubleFaults:a.i_df,isaacLets:a.i_lets,oppDoubleFaults:a.o_df,oppLets:a.o_lets,isaac1stServeAttempts:a.i_s1att,opp1stServeAttempts:a.o_s1att,isaac1stServeIn:a.i_s1,isaac1stServeWon:a.i_s1w,isaac2ndServeIn:a.i_s2,isaac2ndServeWon:a.i_s2w,opp1stServeIn:a.o_s1,opp1stServeWon:a.o_s1w,opp2ndServeIn:a.o_s2,opp2ndServeWon:a.o_s2w,returnPoints:a.retPts,returnPointsWon:a.retWon,leadDisengagement:a.leadDis,inAttackTaggedPoints:ia.tagged,inAttackTotalPoints:ia.total,isaacDictatePoints:ia.i.dictate.n,isaacDictateWon:ia.i.dictate.w,isaacBuildPoints:ia.i.build.n,isaacBuildWon:ia.i.build.w,isaacBuildErrors:ia.i.build.e,isaacDefendPoints:ia.i.defend.n,isaacDefendWon:ia.i.defend.w,oppDictatePoints:ia.o.dictate.n,oppDictateWon:ia.o.dictate.w,oppDefendPoints:ia.o.defend.n,oppDefendWon:ia.o.defend.w,missedDictates:ia.lost.n,gameLog:M.games.map(g=>`S${g.setN}G${g.number}:${g.winner==='isaac'?'I':'O'}`).join(' ')};
 }
 
 function copyReport(){
@@ -1566,7 +1568,7 @@ function shareReport() {
     <div class="card">
       <table>
         <tr><th class="left">Serve Stat</th><th>Isaac</th><th>${os}</th></tr>
-        <tr><td class="label">1st Serve In</td><td class="neu">${a.i_s1}</td><td class="neu">${a.o_s1}</td></tr>
+        <tr><td class="label">1st Serve In</td><td class="neu">${a.i_s1}/${a.i_s1att} (${pct(a.i_s1,a.i_s1att)}%)</td><td class="neu">${a.o_s1}/${a.o_s1att} (${pct(a.o_s1,a.o_s1att)}%)</td></tr>
         <tr><td class="label">Pts Won on 1st</td><td class="good">${a.i_s1w} (${pct(a.i_s1w,a.i_s1)}%)</td><td class="neu">${a.o_s1w} (${pct(a.o_s1w,a.o_s1)}%)</td></tr>
         <tr><td class="label">2nd Serve In</td><td class="neu">${a.i_s2}</td><td class="neu">${a.o_s2}</td></tr>
         <tr><td class="label">Pts Won on 2nd</td><td class="good">${a.i_s2w} (${pct(a.i_s2w,a.i_s2)}%)</td><td class="neu">${a.o_s2w} (${pct(a.o_s2w,a.o_s2)}%)</td></tr>
