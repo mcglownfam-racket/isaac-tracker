@@ -82,10 +82,13 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
 
 /* UNDO BAR */
 .undo-bar{display:flex;gap:8px;align-items:center}
-.point-strip{display:flex;flex-wrap:wrap;gap:3px;flex:1;min-height:12px}
+.point-strip{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-height:14px;padding:2px}
 .point-dot{width:9px;height:9px;border-radius:50%}
 .point-dot.iw{background:var(--green)}
 .point-dot.ow{background:var(--red)}
+.point-dot.p-defend{box-shadow:0 0 0 2px #8B4513}
+.point-dot.p-build{box-shadow:0 0 0 2px #5B7FA3}
+.point-dot.p-dictate{box-shadow:0 0 0 2px #1F5E3B}
 .undo-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:7px 13px;cursor:pointer;transition:all .12s;text-transform:uppercase}
 .undo-btn:active{border-color:var(--accent);color:var(--accent)}
 .undo-btn:disabled{opacity:.3;pointer-events:none}
@@ -123,7 +126,25 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
 .qr-label{font-size:9px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:2px}
 
 /* OUTCOME GRID */
+.pt-heads{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:6px}
+.pt-head{text-align:center;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:6px 0;border-radius:8px;color:#fff}
+.pt-i{background:var(--green,#1F5E3B)}.pt-o{background:var(--red,#B8372A)}
 .outcome-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+
+/* POSITION STEP */
+.ph-result{display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;margin-bottom:10px}
+.ph-link{background:none;border:none;color:var(--blue);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;padding:4px 0 4px 10px}
+.ph-who{font-size:13px;font-weight:700;margin-bottom:5px}
+.ph-seg{display:flex;gap:6px}
+.ph-btn{flex:1;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);padding:8px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--text);min-height:52px;transition:all .12s;text-transform:uppercase;letter-spacing:.03em}
+.ph-btn:active{transform:scale(.96)}
+.ph-btn svg{display:block}
+.ph-cue{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin:4px 0 10px;min-height:14px}
+.ph-sum{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;margin-bottom:10px;min-height:38px;line-height:1.4}
+.ph-actions{display:flex;gap:8px}
+.ph-back{flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:.05em;padding:14px;cursor:pointer;text-transform:uppercase}
+.ph-log{flex:2;width:auto}
+.ia-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.5}
 
 /* GAME LOG */
 .game-log{display:flex;flex-direction:column;gap:5px}
@@ -140,7 +161,7 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
 .sum-title{font-size:20px;font-weight:800;letter-spacing:-.01em}
 .sum-meta{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px}
 .sum-nav{display:flex;gap:5px;margin-top:9px}
-.sum-nav-btn{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:var(--muted);padding:7px 2px;cursor:pointer;text-align:center;text-transform:uppercase;letter-spacing:.04em;transition:all .12s}
+.sum-nav-btn{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:var(--muted);padding:7px 1px;cursor:pointer;text-align:center;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;transition:all .12s}
 .sum-nav-btn.active{background:#1a1410;border-color:#1a1410;color:#fff}
 .sum-page{display:none;padding:13px 15px;flex-direction:column;gap:11px;overflow-y:auto;flex:1}
 .sum-page.active{display:flex}
@@ -338,6 +359,7 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
     <!-- STEP: Outcome -->
     <div id="step-outcome" style="display:none">
       <div class="step-label" id="outcome-lbl">Point Outcome</div>
+      <div class="pt-heads"><div class="pt-head pt-i">Pt to Isaac</div><div class="pt-head pt-o">Pt to Opp</div></div>
       <!-- Quick resolve -->
       <div class="quick-resolve" id="quick-resolve-wrap">
         <div class="qr-label">Quick Resolve</div>
@@ -345,12 +367,24 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
       </div>
       <!-- 6 outcomes -->
       <div class="outcome-grid">
-        <button class="ab c-iwin" onclick="onOutcome('IW')"><div class="icon">🎯</div><div class="lbl">Isaac Winner</div><div class="sub">Opp couldn't reach it</div></button>
-        <button class="ab c-owin" onclick="onOutcome('OW')"><div class="icon">🎯</div><div class="lbl">Opp Winner</div><div class="sub">Isaac couldn't reach it</div></button>
-        <button class="ab c-iwin" onclick="onOutcome('IF')"><div class="icon">↗️</div><div class="lbl">Isaac Forced</div><div class="sub">Opp Error</div></button>
-        <button class="ab c-owin" onclick="onOutcome('OF')"><div class="icon">↘️</div><div class="lbl">Opp Forced</div><div class="sub">Isaac Error</div></button>
-        <button class="ab c-iwin" onclick="onOutcome('IU')"><div class="icon">⚡</div><div class="lbl">Isaac Unforced</div><div class="sub">Opp Missed</div></button>
-        <button class="ab c-owin" onclick="onOutcome('OU')"><div class="icon">⚡</div><div class="lbl">Opp Unforced</div><div class="sub">Isaac Missed</div></button>
+        <button class="ab c-iwin" onclick="onOutcome('IW')"><div class="lbl">Isaac hit winner</div></button>
+        <button class="ab c-owin" onclick="onOutcome('OW')"><div class="lbl">Opp hit winner</div></button>
+        <button class="ab c-iwin" onclick="onOutcome('IF')"><div class="lbl">Opp hit forced error</div></button>
+        <button class="ab c-owin" onclick="onOutcome('OF')"><div class="lbl">Isaac hit forced error</div></button>
+        <button class="ab c-iwin" onclick="onOutcome('IU')"><div class="lbl">Opp hit unforced error</div></button>
+        <button class="ab c-owin" onclick="onOutcome('OU')"><div class="lbl">Isaac hit unforced error</div></button>
+      </div>
+    </div>
+
+    <!-- STEP: Positions -->
+    <div id="step-phase" style="display:none">
+      <div class="step-label">Positions when the point ended</div>
+      <div class="ph-result"><span id="ph-result-txt"></span><button class="ph-link" onclick="backToOutcome()">Change</button></div>
+      <div id="phase-rows"></div>
+      <div class="ph-sum" id="phase-sum"></div>
+      <div class="ph-actions">
+        <button class="ph-back" onclick="backToOutcome()">Back</button>
+        <button class="btn-primary ph-log" onclick="logPhasePoint()">Log it</button>
       </div>
     </div>
 
@@ -373,6 +407,7 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
       <button class="sum-nav-btn active" onclick="showPage(0)">Overview</button>
       <button class="sum-nav-btn" onclick="showPage(1)">Momentum</button>
       <button class="sum-nav-btn" onclick="showPage(2)">Serve & Return</button>
+      <button class="sum-nav-btn" onclick="showPage(3)">In Attack</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:9px">
       <button class="btn-primary" style="flex:1;font-size:15px;padding:11px" onclick="newMatch()">← New Match</button>
@@ -432,6 +467,8 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
     </div>
     <div class="chart-card"><div class="chart-title">Return Summary</div><div id="return-detail" style="font-size:13px;line-height:1.9;color:var(--text)"></div></div>
   </div>
+
+  <div class="sum-page" id="page-3"><div id="ia-body" style="display:flex;flex-direction:column;gap:11px"></div></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -462,7 +499,7 @@ function freshGame(num,server,isTb,tbTarget){
   return{number:num,server,isTb,tbTarget,setN:1,
     isaacRawPts:0,oppRawPts:0,deuce:false,adServer:null,points:[]};
 }
-function freshPoint(){return{serve:1,serveResult:null,outcome:null,oppServe:1};}
+function freshPoint(){return{serve:1,serveResult:null,outcome:null,oppServe:1,iPos:null,oPos:null,iTouched:false,oTouched:false};}
 
 // SETUP
 function setLevel(l){selectedLevel=l;document.querySelectorAll('.level-btn').forEach(b=>b.classList.toggle('active',b.textContent===l));}
@@ -540,17 +577,100 @@ function renderQuickResolve(server){
   wrap.style.display='block';
   if(server==='isaac'){
     btns.innerHTML=`
-      <button class="ab c-retmiss" onclick="onOutcome('RETMISS')"><div class="icon">↩️</div><div class="lbl">Opp Return Miss</div><div class="sub">Isaac wins point</div></button>
+      <button class="ab c-retmiss" onclick="onQuickOutcome('RETMISS')"><div class="lbl">Opp Return Miss</div></button>
       <div></div>`;
   } else {
     btns.innerHTML=`
       <div></div>
-      <button class="ab c-isaacmiss" onclick="onOutcome('OU')" style="border-color:var(--red)"><div class="icon">↩️</div><div class="lbl">Isaac Return Miss</div><div class="sub">Opp wins point</div></button>`;
+      <button class="ab c-isaacmiss" onclick="onQuickOutcome('OU')" style="border-color:var(--red)"><div class="lbl">Isaac Return Miss</div></button>`;
   }
 }
 
+// Rally result: stage it, then ask where each player was. Nothing is scored until Log it.
 function onOutcome(code){
+  M.point.outcome=code;
+  M.point.iPos=null;M.point.oPos=null;M.point.iTouched=false;M.point.oTouched=false;
+  M.step='phase';
+  renderSteps();
+  autosaveInProgress();
+}
+
+// No-rally results (quick resolve return misses) log immediately with no position tag.
+function onQuickOutcome(code){
   M.point.outcome=code;commitPoint(iWins(code));
+}
+
+// POSITIONS: Defend, Build, Dictate (left to right)
+const PHASES=['defend','build','dictate'];
+const P_LBL={defend:'Defend',build:'Build',dictate:'Dictate'};
+const P_COL={defend:'#8B4513',build:'#5B7FA3',dictate:'#1F5E3B'};
+const P_CUE={defend:'Defend: survive and reset',build:'Build: construct toward Dictate',dictate:'Dictate: take control now'};
+const P_PAIR={dictate:'defend',defend:'dictate',build:'build'};
+const OUT_TXT={IW:'Isaac hit winner',OW:'Opp hit winner',IF:'Opp hit forced error',OF:'Isaac hit forced error',IU:'Opp hit unforced error',OU:'Isaac hit unforced error'};
+
+function esc(t){return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function oppShort(){return ((M.setup&&M.setup.opp)||'Opp').split(',')[0];}
+
+function phIcon(zone,sel){
+  const ys={dictate:0,build:6,defend:12};
+  let out='<svg width="22" height="16" viewBox="0 0 22 16" aria-hidden="true">';
+  PHASES.forEach(z=>{
+    const own=z===zone;
+    const fill=own?(sel?'#fff':P_COL[z]):(sel?'rgba(255,255,255,.35)':'#e0d8cc');
+    out+=`<rect x="0" y="${ys[z]}" width="22" height="4" rx="1" fill="${fill}"/>`;
+  });
+  return out+'</svg>';
+}
+
+function renderPhase(){
+  const pt=M.point,os=esc(oppShort());
+  const wins=iWins(pt.outcome);
+  document.getElementById('ph-result-txt').textContent=(OUT_TXT[pt.outcome]||pt.outcome)+' → '+(wins?'Isaac wins':oppShort()+' wins');
+  let h='';
+  [['i','Isaac'],['o',os]].forEach(([k,name])=>{
+    h+=`<div class="ph-who">${name}</div><div class="ph-seg">`;
+    PHASES.forEach(p=>{
+      const sel=pt[k+'Pos']===p;
+      const st=sel?`background:${P_COL[p]};border-color:${P_COL[p]};color:#fff`:'';
+      h+=`<button class="ph-btn" style="${st}" onclick="pickPhase('${k}','${p}')">${phIcon(p,sel)}<span>${P_LBL[p]}</span></button>`;
+    });
+    h+=`</div><div class="ph-cue">${pt[k+'Pos']?P_CUE[pt[k+'Pos']]:'Not set'}</div>`;
+  });
+  document.getElementById('phase-rows').innerHTML=h;
+  const sm=document.getElementById('phase-sum');
+  if(pt.iPos&&pt.oPos){
+    sm.innerHTML=`Isaac ${P_LBL[pt.iPos].toLowerCase()} · ${os} ${P_LBL[pt.oPos].toLowerCase()} · ${OUT_TXT[pt.outcome]||pt.outcome} → <strong>${wins?'Isaac wins':os+' wins'}</strong>`;
+  } else {
+    const need=[];if(!pt.iPos)need.push('Isaac position');if(!pt.oPos)need.push(oppShort()+' position');
+    sm.innerHTML=`<span style="color:var(--muted)">Still needed: ${need.map(esc).join(', ')}</span>`;
+  }
+}
+
+function pickPhase(who,p){
+  const other=who==='i'?'o':'i';
+  M.point[who+'Pos']=p;
+  if(!M.point[other+'Touched'])M.point[other+'Pos']=P_PAIR[p];
+  M.point[who+'Touched']=true;
+  renderPhase();autosaveInProgress();
+}
+
+function backToOutcome(){
+  M.step='outcome';
+  const srv=M.currentServer==='isaac';
+  const n=srv?M.point.serve:M.point.oppServe;
+  document.getElementById('outcome-lbl').textContent=srv
+    ?(n===1?'Rally Outcome — 1st Serve In':'Rally Outcome — 2nd Serve In')
+    :(n===1?'Rally Outcome — Opp 1st Serve In':'Rally Outcome — Opp 2nd Serve In');
+  renderQuickResolve(srv?'isaac':'opp');
+  renderSteps();autosaveInProgress();
+}
+
+function logPhasePoint(){
+  const pt=M.point;
+  if(!pt.iPos||!pt.oPos){showToast('Set both positions first');return;}
+  // remember the staged result so Undo can bring it back for editing
+  if(M.history.length)M.history[M.history.length-1].restore={outcome:pt.outcome,iPos:pt.iPos,oPos:pt.oPos};
+  commitPoint(iWins(pt.outcome));
 }
 
 // COMMIT POINT
@@ -560,8 +680,9 @@ function commitPoint(isaacWon){
     const p={serve:M.currentServer==='isaac'?M.point.serve:M.point.oppServe,
       server:M.currentServer,serveResult:M.point.serveResult,
       outcome:M.point.outcome,isTb:M.game.isTb};
+    if(M.point.iPos&&M.point.oPos){p.iPos=M.point.iPos;p.oPos=M.point.oPos;}
     M.game.points.push(p);
-    addDot(isaacWon?'iw':'ow');
+    addDot(isaacWon?'iw':'ow',p.iPos);
     document.getElementById('undo-btn').disabled=false;
     scorePoint(isaacWon);
   }
@@ -678,14 +799,21 @@ function pushUndo(){
 function undoPoint(){
   if(M.history.length===0){showToast('Nothing to undo');return;}
   const snap=M.history.pop();
-  M.game=snap.game;M.isaacSets=snap.isaacSets;M.oppSets=snap.oppSets;M.currentSet=snap.currentSet;M.setHistory=snap.setHistory;M.isaacGames=snap.isaacGames;M.oppGames=snap.oppGames;M.currentServer=snap.currentServer;M.games.splice(snap.gamesLen);M.step=snap.step;M.point=snap.point;
+  const rs=snap.restore;
+  M.game=JSON.parse(JSON.stringify(snap.game));M.isaacSets=snap.isaacSets;M.oppSets=snap.oppSets;M.currentSet=snap.currentSet;M.setHistory=JSON.parse(JSON.stringify(snap.setHistory));M.isaacGames=snap.isaacGames;M.oppGames=snap.oppGames;M.currentServer=snap.currentServer;M.games.splice(snap.gamesLen);M.step=snap.step;M.point=JSON.parse(JSON.stringify(snap.point));
+  if(rs){
+    // undoing a logged rally point: bring back the result and positions for editing
+    delete snap.restore;M.history.push(snap);
+    M.point.serveResult='in';M.point.outcome=rs.outcome;M.point.iPos=rs.iPos;M.point.oPos=rs.oPos;M.point.iTouched=true;M.point.oTouched=true;
+    M.step='phase';
+  }
   const strip=document.getElementById('point-strip');strip.innerHTML='';
-  M.game.points.forEach(p=>{if(p.outcome&&p.outcome!=='FAULT_ONLY'&&p.outcome!=='LET')addDot(iWins(p.outcome)?'iw':'ow');});
+  M.game.points.forEach(p=>{if(p.outcome&&p.outcome!=='FAULT_ONLY'&&p.outcome!=='LET')addDot(iWins(p.outcome)?'iw':'ow',p.iPos);});
   document.getElementById('undo-btn').disabled=M.history.length===0;
   document.getElementById('hdr-i').textContent=M.isaacSets;
   document.getElementById('hdr-o').textContent=M.oppSets;
   document.getElementById('quick-resolve-wrap').style.display='none';
-  renderAll();renderGameLog();showToast('Undone ↩');
+  renderAll();renderGameLog();showToast(rs?'Undone — result and positions restored':'Undone ↩');autosaveInProgress();
 }
 
 // RENDER
@@ -744,11 +872,14 @@ function renderSteps(){
   show('step-serve',      M.step==='serve');
   show('step-opp-serve',  M.step==='opp-serve');
   show('step-outcome',    M.step==='outcome');
+  show('step-phase',      M.step==='phase');
+  if(M.step==='phase')renderPhase();
+  const ub=document.getElementById('undo-btn');if(ub)ub.disabled=M.history.length===0;
   if(M.step==='serve'){const lbl=document.getElementById('serve-lbl');if(lbl)lbl.textContent=M.point.serve===2?'2nd Serve Outcome':'Serve Outcome';}
 }
 
 function show(id,vis){const el=document.getElementById(id);if(el)el.style.display=vis?'block':'none';}
-function addDot(cls){const d=document.createElement('div');d.className='point-dot '+cls;document.getElementById('point-strip').appendChild(d);}
+function addDot(cls,pos){const d=document.createElement('div');d.className='point-dot '+cls+(pos?' p-'+pos:'');document.getElementById('point-strip').appendChild(d);}
 
 function renderGameLog(){
   document.getElementById('game-log-section').style.display='block';
@@ -898,12 +1029,119 @@ function buildSummary(){
     <tr><td class="label">Double Faults</td><td class="bad">${a.i_df}</td><td class="bad">${a.o_df}</td></tr>
     <tr><td class="label">Lets</td><td class="neu">${a.i_lets}</td><td class="neu">${a.o_lets}</td></tr>`;
 
+  buildInAttack();
   buildServeArc(a.serveGames);
   document.getElementById('return-detail').innerHTML=
     `Return pts won: <strong>${a.retWon}/${a.retPts} (${pct(a.retWon,a.retPts)}%)</strong><br>
     Opp forced errors: <strong>${a.oF}</strong><br>
     Opp unforced errors: <strong>${a.oU}</strong><br>
     Opp double faults: <strong>${a.o_df}</strong>`;
+}
+
+
+// IN ATTACK (per point: where each player was when the point ended)
+function inAttackStats(){
+  const blank=()=>({n:0,w:0,e:0});
+  const r={total:0,tagged:0,i:{defend:blank(),build:blank(),dictate:blank()},o:{defend:blank(),build:blank(),dictate:blank()},grid:{},lost:{n:0,iErr:0,oWin:0},byGame:[]};
+  PHASES.forEach(a=>{r.grid[a]={};PHASES.forEach(b=>{r.grid[a][b]={n:0,w:0};});});
+  M.games.forEach(g=>{
+    const gr={num:g.number,tagged:0,dict:0,dictW:0};
+    g.points.forEach(p=>{
+      if(!p.outcome||p.outcome==='FAULT_ONLY'||p.outcome==='LET')return;
+      r.total++;
+      if(!(p.iPos&&p.oPos))return;
+      r.tagged++;gr.tagged++;
+      const iw=iWins(p.outcome);
+      const iErr=p.outcome==='OF'||p.outcome==='OU';
+      const oErr=p.outcome==='IF'||p.outcome==='IU';
+      const ci=r.i[p.iPos],co=r.o[p.oPos];
+      ci.n++;if(iw)ci.w++;if(iErr)ci.e++;
+      co.n++;if(!iw)co.w++;if(oErr)co.e++;
+      const gc=r.grid[p.iPos][p.oPos];gc.n++;if(iw)gc.w++;
+      if(p.iPos==='dictate'){
+        gr.dict++;if(iw)gr.dictW++;
+        if(!iw){r.lost.n++;if(iErr)r.lost.iErr++;if(p.outcome==='OW')r.lost.oWin++;}
+      }
+    });
+    if(gr.tagged>0)r.byGame.push(gr);
+  });
+  return r;
+}
+
+function pctDash(w,n){return n>0?Math.round(w/n*100)+'%':'—';}
+function heat(w,n){
+  if(!n)return '';
+  const p=w/n,a=(0.1+0.3*Math.abs(p-0.5)*2).toFixed(2);
+  return 'background:'+(p>=0.5?'rgba(26,122,58,'+a+')':'rgba(192,57,43,'+a+')');
+}
+
+function iaData(os){
+  const t=inAttackStats(),d={t,has:t.tagged>0};
+  if(!d.has)return d;
+  const iD=t.i.dictate,iB=t.i.build,iF=t.i.defend;
+  d.cover=`${t.tagged} of ${t.total} points have positions. Aces, double faults and return misses have no rally, so they aren't tagged.`;
+  d.kpis=[
+    {l:'Dictate points',v:pctDash(iD.n,t.tagged),s:`${iD.n} of ${t.tagged} tagged points`},
+    {l:'Conversion',v:pctDash(iD.w,iD.n),s:`won ${iD.w} of ${iD.n} when Dictating`},
+    {l:'Steal',v:pctDash(iF.w,iF.n),s:`won ${iF.w} of ${iF.n} when Defending`},
+    {l:'Errors in Build',v:String(iB.e),s:`of ${iB.n} Build points`}
+  ];
+  const posRows=(side)=>{
+    let h='<tr><th class="left">Position</th><th>Points</th><th>Won</th><th>Errors</th></tr>';
+    ['dictate','build','defend'].forEach(p=>{
+      const c=side[p];
+      h+=`<tr><td class="label">${P_LBL[p]}</td><td class="neu">${c.n}</td><td class="neu">${c.n?c.w+' ('+pctDash(c.w,c.n)+')':'–'}</td><td class="neu">${c.n?c.e+' ('+pctDash(c.e,c.n)+')':'–'}</td></tr>`;
+    });
+    return h;
+  };
+  d.isaacRows=posRows(t.i);
+  d.oppRows=posRows(t.o);
+  let g=`<tr><th class="left">Isaac ↓ · ${esc(os)} →</th>${PHASES.map(p=>`<th>${P_LBL[p]}</th>`).join('')}</tr>`;
+  PHASES.forEach(ip=>{
+    g+=`<tr><td class="label">${P_LBL[ip]}</td>`;
+    PHASES.forEach(op=>{const c=t.grid[ip][op];g+=`<td class="neu" style="${heat(c.w,c.n)}">${c.n?c.w+'/'+c.n:'–'}</td>`;});
+    g+='</tr>';
+  });
+  d.gridRows=g;
+  d.lostText=iD.n===0?'Isaac did not hold Dictate on any tagged point.'
+    :`Isaac lost <strong>${t.lost.n}</strong> of ${iD.n} Dictate points: ${t.lost.iErr} on his own errors, ${t.lost.oWin} to opponent winners.${t.lost.n>0?' Review these with your coach: did he commit, or hold back?':''}`;
+  d.gameRows='<tr><th class="left">Game</th><th>Tagged</th><th>Dictate</th><th>Won</th></tr>'+t.byGame.map(r=>`<tr><td class="label">G${r.num}</td><td class="neu">${r.tagged}</td><td class="neu">${r.dict}</td><td class="neu">${r.dict?r.dictW+'/'+r.dict:'–'}</td></tr>`).join('');
+  d.note='Positions are tagged once per point, where each player was when it ended. Conversion and Steal here are per point, so they are not directly comparable to the ATP tour per-shot averages.'+(t.tagged<40?' Small sample: read the trend across matches, not one match.':'');
+  return d;
+}
+
+function buildInAttack(){
+  const el=document.getElementById('ia-body');
+  const os=oppShort(),d=iaData(os);
+  if(!d.has){
+    el.innerHTML='<div class="chart-card"><div class="chart-title">In Attack</div><div style="font-size:13px;line-height:1.6;color:var(--text)">No positions were tagged in this match. Positions are tagged after each rally point.</div></div>';
+    return;
+  }
+  el.innerHTML=
+    `<div class="ia-note">${d.cover}</div>
+    <div class="stat-grid">${d.kpis.map(k=>`<div class="stat-card"><div class="stat-label">${k.l}</div><div class="stat-val">${k.v}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${k.s}</div></div>`).join('')}</div>
+    <div class="chart-card"><div class="chart-title">Isaac by position</div><table class="cmp-table">${d.isaacRows}</table></div>
+    <div class="chart-card"><div class="chart-title">${esc(os)} by position</div><table class="cmp-table">${d.oppRows}</table></div>
+    <div class="chart-card"><div class="chart-title">Points Isaac won, by position pairing</div><table class="cmp-table">${d.gridRows}</table></div>
+    <div class="chart-card" style="border-color:var(--amber)"><div class="chart-title" style="color:var(--amber)">Missed Dictates</div><div style="font-size:13px;line-height:1.6;color:var(--text)">${d.lostText}</div></div>
+    <div class="chart-card"><div class="chart-title">By game</div><table class="cmp-table">${d.gameRows}</table></div>
+    <div class="ia-note">${d.note}</div>`;
+}
+
+function buildInAttackReport(os){
+  const d=iaData(os);
+  if(!d.has)return '<div class="page-break"><div class="section-title">In Attack</div><div class="card" style="font-size:13px">No positions were tagged in this match.</div></div>';
+  return `<div class="page-break">
+    <div class="section-title">In Attack</div>
+    <div style="font-size:11px;color:#9a8878;font-family:monospace;margin-bottom:10px">${d.cover}</div>
+    <div class="stat-grid" style="grid-template-columns:1fr 1fr">${d.kpis.map(k=>`<div class="stat"><div class="stat-label">${k.l}</div><div class="stat-val">${k.v}</div><div style="font-size:11px;color:#9a8878">${k.s}</div></div>`).join('')}</div>
+  </div>
+  <div class="card"><div class="section-title">Isaac by position</div><table>${d.isaacRows}</table></div>
+  <div class="card"><div class="section-title">${esc(os)} by position</div><table>${d.oppRows}</table></div>
+  <div class="card"><div class="section-title">Points Isaac won, by position pairing</div><table>${d.gridRows}</table></div>
+  <div class="lead-dis"><div class="lead-dis-title">Missed Dictates</div><div style="font-size:13px;line-height:1.6">${d.lostText}</div></div>
+  <div class="card"><div class="section-title">By game</div><table>${d.gameRows}</table></div>
+  <div style="font-size:11px;color:#9a8878;font-family:monospace;line-height:1.5">${d.note}</div>`;
 }
 
 // CHARTS
@@ -995,9 +1233,9 @@ function showPage(idx){
 
 // EXPORT
 function buildPayload(){
-  const a=aggregateStats();
+  const a=aggregateStats(),ia=inAttackStats();
   const iTotal=a.iF+a.iU+a.i_df,oTotal=a.oF+a.oU+a.o_df; // true totals include double faults (Isaac's/Opp's own service errors)
-  return{date:M.setup.date,level:M.setup.level,round:M.setup.round,surface:M.setup.surface,opp:M.setup.opp,oppWtn:M.setup.oppWtn,oppUtr:M.setup.oppUtr,format:M.setup.format,noAd:M.setup.noAd,isaacSets:M.isaacSets,oppSets:M.oppSets,totalGames:M.games.length,isaacGamesWon:a.iGames,totalPoints:a.total,isaacPoints:a.ipts,pointWinPct:pct(a.ipts,a.total),isaacWinners:a.iW,oppWinners:a.oW,isaacForcedErrors:a.iF,oppForcedErrors:a.oF,isaacUnforcedErrors:a.iU,oppUnforcedErrors:a.oU,isaacTotalErrors:iTotal,oppTotalErrors:oTotal,aces:a.i_aces,oppAces:a.o_aces,doubleFaults:a.i_df,isaacLets:a.i_lets,oppDoubleFaults:a.o_df,oppLets:a.o_lets,isaac1stServeIn:a.i_s1,isaac1stServeWon:a.i_s1w,isaac2ndServeIn:a.i_s2,isaac2ndServeWon:a.i_s2w,opp1stServeIn:a.o_s1,opp1stServeWon:a.o_s1w,opp2ndServeIn:a.o_s2,opp2ndServeWon:a.o_s2w,returnPoints:a.retPts,returnPointsWon:a.retWon,leadDisengagement:a.leadDis,gameLog:M.games.map(g=>`S${g.setN}G${g.number}:${g.winner==='isaac'?'I':'O'}`).join(' ')};
+  return{date:M.setup.date,level:M.setup.level,round:M.setup.round,surface:M.setup.surface,opp:M.setup.opp,oppWtn:M.setup.oppWtn,oppUtr:M.setup.oppUtr,format:M.setup.format,noAd:M.setup.noAd,isaacSets:M.isaacSets,oppSets:M.oppSets,totalGames:M.games.length,isaacGamesWon:a.iGames,totalPoints:a.total,isaacPoints:a.ipts,pointWinPct:pct(a.ipts,a.total),isaacWinners:a.iW,oppWinners:a.oW,isaacForcedErrors:a.iF,oppForcedErrors:a.oF,isaacUnforcedErrors:a.iU,oppUnforcedErrors:a.oU,isaacTotalErrors:iTotal,oppTotalErrors:oTotal,aces:a.i_aces,oppAces:a.o_aces,doubleFaults:a.i_df,isaacLets:a.i_lets,oppDoubleFaults:a.o_df,oppLets:a.o_lets,isaac1stServeIn:a.i_s1,isaac1stServeWon:a.i_s1w,isaac2ndServeIn:a.i_s2,isaac2ndServeWon:a.i_s2w,opp1stServeIn:a.o_s1,opp1stServeWon:a.o_s1w,opp2ndServeIn:a.o_s2,opp2ndServeWon:a.o_s2w,returnPoints:a.retPts,returnPointsWon:a.retWon,leadDisengagement:a.leadDis,inAttackTaggedPoints:ia.tagged,inAttackTotalPoints:ia.total,isaacDictatePoints:ia.i.dictate.n,isaacDictateWon:ia.i.dictate.w,isaacBuildPoints:ia.i.build.n,isaacBuildWon:ia.i.build.w,isaacBuildErrors:ia.i.build.e,isaacDefendPoints:ia.i.defend.n,isaacDefendWon:ia.i.defend.w,oppDictatePoints:ia.o.dictate.n,oppDictateWon:ia.o.dictate.w,oppDefendPoints:ia.o.defend.n,oppDefendWon:ia.o.defend.w,missedDictates:ia.lost.n,gameLog:M.games.map(g=>`S${g.setN}G${g.number}:${g.winner==='isaac'?'I':'O'}`).join(' ')};
 }
 
 function copyReport(){
@@ -1009,7 +1247,7 @@ function copyReport(){
   t+=`UNFORCED ERRORS: Isaac ${p.isaacUnforcedErrors} | ${os} ${p.oppUnforcedErrors}\n`;
   t+=`SERVE — Isaac: Aces ${p.aces} DF ${p.doubleFaults} Lets ${p.isaacLets} | 1st: ${p.isaac1stServeWon}/${p.isaac1stServeIn} | 2nd: ${p.isaac2ndServeWon}/${p.isaac2ndServeIn}\n`;
   t+=`SERVE — ${os}: Aces ${p.oppAces} DF ${p.oppDoubleFaults} Lets ${p.oppLets} | 1st: ${p.opp1stServeWon}/${p.opp1stServeIn} | 2nd: ${p.opp2ndServeWon}/${p.opp2ndServeIn}\n`;
-  t+=`RETURN: ${p.returnPointsWon}/${p.returnPoints} pts won\nLEAD DISENGAGEMENT: ${p.leadDisengagement} games\nGAMES: ${p.gameLog}`;
+  t+=`RETURN: ${p.returnPointsWon}/${p.returnPoints} pts won\nIN ATTACK: ${p.inAttackTaggedPoints}/${p.inAttackTotalPoints} points tagged | Dictate pts ${p.isaacDictatePoints} (won ${p.isaacDictateWon}) | Defend pts ${p.isaacDefendPoints} (won ${p.isaacDefendWon}) | Errors in Build ${p.isaacBuildErrors}/${p.isaacBuildPoints} | Missed Dictates ${p.missedDictates}\nLEAD DISENGAGEMENT: ${p.leadDisengagement} games\nGAMES: ${p.gameLog}`;
   navigator.clipboard.writeText(t).then(()=>showToast('Copied!')).catch(()=>showToast('Copy failed'));
 }
 
@@ -1119,6 +1357,8 @@ function shareReport() {
       ${sdots}
     </svg>`;
   }
+
+  const iaReportHTML = buildInAttackReport(os);
 
   const html = `<!DOCTYPE html>
 <html>
@@ -1257,6 +1497,8 @@ function shareReport() {
       Opp double faults: <strong>${a.o_df}</strong>
     </div>
   </div>
+
+  ${iaReportHTML}
 
 </div>
 
