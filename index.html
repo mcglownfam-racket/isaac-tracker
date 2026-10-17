@@ -13,8 +13,8 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{overscroll-behavior-y:none}
-body{background:var(--bg);color:var(--text);font-family:'Barlow Condensed',sans-serif;min-height:100vh;overflow-x:hidden}
-.screen{display:none;min-height:100vh;flex-direction:column}
+body{background:var(--bg);color:var(--text);font-family:'Barlow Condensed',sans-serif;min-height:100vh;min-height:100dvh;overflow-x:hidden}
+.screen{display:none;min-height:100vh;min-height:100dvh;flex-direction:column}
 .screen.active{display:flex}
 
 /* SETUP */
@@ -157,7 +157,7 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
 .log-pts{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
 
 /* SUMMARY */
-#summary{flex-direction:column;min-height:100vh}
+#summary{flex-direction:column;min-height:100vh;min-height:100dvh}
 .sum-header{background:#fff;border-bottom:1.5px solid var(--border);padding:11px 15px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(26,20,16,.06)}
 .sum-title{font-size:20px;font-weight:800;letter-spacing:-.01em}
 .sum-meta{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px}
@@ -870,13 +870,25 @@ function swapServer(){
 }
 
 let _lastStep=null;
+function scrollTopNow(){
+  try{window.scrollTo(0,0);}catch(e){}
+  try{document.documentElement.scrollTop=0;document.body.scrollTop=0;}catch(e){}
+}
 function keepStepInView(){
-  if(M.step===_lastStep)return;
+  const changed=M.step!==_lastStep;
   _lastStep=M.step;
   try{
-    if(M.step==='serve'||M.step==='opp-serve'){window.scrollTo(0,0);return;}
-    const el=document.getElementById(M.step==='phase'?'step-phase':'step-outcome');
-    if(el){const r=el.getBoundingClientRect();if(r.bottom>window.innerHeight||r.top<0)window.scrollTo(0,Math.max(0,window.scrollY+r.top-70));}
+    if(M.step==='serve'||M.step==='opp-serve'){
+      // always return to the top for the next serve so the score is visible
+      scrollTopNow();
+      requestAnimationFrame(scrollTopNow);
+      setTimeout(scrollTopNow,120);
+      return;
+    }
+    if(!changed)return;
+    const fit=()=>{const el=document.getElementById(M.step==='phase'?'step-phase':'step-outcome');
+      if(el){const r=el.getBoundingClientRect();if(r.bottom>window.innerHeight||r.top<120)window.scrollTo(0,Math.max(0,window.scrollY+r.top-130));}};
+    fit();requestAnimationFrame(fit);
   }catch(e){}
 }
 function renderSteps(){
