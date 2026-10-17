@@ -257,9 +257,9 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
 #ia-body{gap:6px!important}
 /* In Attack tab */
 .ia-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
-.ia-kpi{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 5px;text-align:center;min-width:0}
-.ia-kpi .k-l{font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;line-height:1.2;min-height:19px;display:flex;align-items:center;justify-content:center}
-.ia-kpi .k-v{font-size:21px;font-weight:800;color:var(--accent);line-height:1.1}
+.ia-kpi{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:5px 3px 4px;text-align:center;min-width:0}
+.ia-kpi .k-l{font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;line-height:1.2;white-space:nowrap}
+.ia-kpi .k-v{font-size:22px;font-weight:800;color:var(--accent);line-height:1.1}
 .ia-kpi .k-s{font-size:9px;color:var(--muted);line-height:1.2;margin-top:1px}
 .cmp-table tr.grp th{border-bottom:none;padding-bottom:0;color:var(--text);font-weight:700}
 .cmp-table .sep{border-left:1px solid var(--border)}
@@ -1209,7 +1209,7 @@ function buildInAttack(){
   const lost=t.i.dictate.n===0?'Isaac did not hold Dictate on any tagged point.'
     :`Lost <strong>${t.lost.n}</strong> of ${t.i.dictate.n} Dictate points: ${t.lost.iErr} on his own errors, ${t.lost.oWin} to opponent winners.${t.lost.n>0?' Did he commit, or hold back?':''}`;
   el.innerHTML=
-    `<div class="ia-kpis">${[['Dictate points',d.kpis[0].v,`${t.i.dictate.n} of ${t.tagged}`],['Conversion',d.kpis[1].v,`${t.i.dictate.w} of ${t.i.dictate.n} won`],['Steal',d.kpis[2].v,`${t.i.defend.w} of ${t.i.defend.n} won`],['Errors in Build',d.kpis[3].v,`of ${t.i.build.n} pts`]].map(k=>`<div class="ia-kpi"><div class="k-l">${k[0]}</div><div class="k-v">${k[1]}</div><div class="k-s">${k[2]}</div></div>`).join('')}</div>
+    `<div class="ia-kpis">${[['Dictate',d.kpis[0].v],['Conversion',d.kpis[1].v],['Steal',d.kpis[2].v],['Build errors',d.kpis[3].v]].map(k=>`<div class="ia-kpi"><div class="k-l">${k[0]}</div><div class="k-v">${k[1]}</div></div>`).join('')}</div>
     <div class="chart-card"><div class="chart-title">By position · at the end of the point</div><table class="cmp-table">${posTable}</table></div>
     <div class="chart-card"><div class="chart-title">Points Isaac won · Isaac ↓ vs ${esc(os)} →</div><table class="cmp-table">${d.gridRows.replace(/<th class="left">[^<]*<\/th>/,'<th class="left"></th>')}</table></div>
     <div class="chart-card ia-missed"><div class="chart-title">Missed Dictates</div><div class="ia-missed-txt">${lost}</div></div>
