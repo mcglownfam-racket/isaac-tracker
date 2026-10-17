@@ -215,6 +215,63 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1410;color:#faf6f0;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.08em;padding:10px 20px;border-radius:100px;transition:transform .3s;z-index:100;white-space:nowrap;text-transform:uppercase}
 .toast.show{transform:translateX(-50%) translateY(0)}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* COMPACT REPORT LAYOUT: each report tab fits on one phone screen without scrolling */
+.sum-header{padding:8px 12px}
+.sum-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sum-title{font-size:18px;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum-top-btns{display:flex;gap:6px;flex-shrink:0}
+.sum-mini{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:8px;padding:6px 11px;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text)}
+.sum-mini.dark{background:#1a1410;border-color:#1a1410;color:#fff}
+.sum-meta{font-size:9px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum-nav{margin-top:7px}
+.sum-nav-btn{padding:6px 1px}
+.sum-page{padding:8px 12px 10px;gap:7px;overflow-y:visible}
+.section-head{margin-bottom:4px;font-size:9px}
+.stat-grid{gap:7px}
+.stat-card{padding:7px 10px}
+.stat-label{font-size:9px;margin-bottom:2px}
+.stat-val{font-size:20px;line-height:1.05}
+.bar-wrap{margin-top:3px}
+.chart-card{padding:7px 10px}
+.chart-title{font-size:9px;margin-bottom:4px;letter-spacing:.08em}
+.chart-legend{gap:3px 9px;margin-top:3px}
+.legend-item{font-size:9px}
+.cmp-table th{font-size:9px;padding:3px 5px}
+.cmp-table td{font-size:12px;padding:4px 5px}
+.cmp-table td.label{font-size:10px}
+.gbg-list-grid,#gbg-list{display:grid!important;grid-template-columns:1fr 1fr;gap:4px 6px}
+.gbg-row{padding:4px 7px;grid-template-columns:24px 1fr auto auto;gap:4px}
+.gbg-game{font-size:9px}
+.gbg-winner{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gbg-stat{font-size:9px}
+.action-row{gap:6px}
+.btn-secondary{font-size:13px;padding:8px 6px;border-radius:9px}
+.btn-reset{flex:0 0 auto;color:var(--muted);font-size:11px;padding:8px 10px}
+.ret-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;font-size:12px;color:var(--text)}
+.ret-grid div{display:flex;justify-content:space-between;gap:6px}
+.ret-grid span{color:var(--muted)}
+.ret-main{grid-column:1/-1;border-bottom:1px solid var(--surface2);padding-bottom:3px}
+#lead-dis-card .chart-card{padding:6px 10px}
+#page-3 .cmp-table td{padding:3px 5px}
+#ia-body{gap:6px!important}
+/* In Attack tab */
+.ia-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.ia-kpi{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 5px;text-align:center;min-width:0}
+.ia-kpi .k-l{font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;line-height:1.2;min-height:19px;display:flex;align-items:center;justify-content:center}
+.ia-kpi .k-v{font-size:21px;font-weight:800;color:var(--accent);line-height:1.1}
+.ia-kpi .k-s{font-size:9px;color:var(--muted);line-height:1.2;margin-top:1px}
+.cmp-table tr.grp th{border-bottom:none;padding-bottom:0;color:var(--text);font-weight:700}
+.cmp-table .sep{border-left:1px solid var(--border)}
+.ia-missed{border-color:var(--amber)}
+.ia-missed .chart-title{color:var(--amber)}
+.ia-missed-txt{font-size:12px;line-height:1.35;color:var(--text)}
+.ia-chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:4px}
+.ia-chip{background:var(--surface2);border-radius:7px;padding:3px 2px;text-align:center;display:flex;flex-direction:column;line-height:1.15}
+.ia-chip span{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted)}
+.ia-chip strong{font-size:13px}
+.ia-chip em{font-style:normal;font-size:8px;color:var(--muted)}
+.ia-note{font-size:9px;line-height:1.3}
 </style>
 </head>
 <body>
@@ -402,7 +459,13 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
 <!-- SUMMARY -->
 <div id="summary" class="screen">
   <div class="sum-header">
-    <div class="sum-title" id="sum-title">Match Summary</div>
+    <div class="sum-top">
+      <div class="sum-title" id="sum-title">Match Summary</div>
+      <div class="sum-top-btns">
+        <button class="sum-mini dark" onclick="newMatch()">← New</button>
+        <button class="sum-mini" onclick="shareReport()">Share</button>
+      </div>
+    </div>
     <div class="sum-meta" id="sum-meta"></div>
     <div class="sum-nav">
       <button class="sum-nav-btn active" onclick="showPage(0)">Overview</button>
@@ -410,29 +473,23 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
       <button class="sum-nav-btn" onclick="showPage(2)">Serve & Return</button>
       <button class="sum-nav-btn" onclick="showPage(3)">In Attack</button>
     </div>
-    <div style="display:flex;gap:8px;margin-top:9px">
-      <button class="btn-primary" style="flex:1;font-size:15px;padding:11px" onclick="newMatch()">← New Match</button>
-      <button class="btn-secondary" style="flex:1;font-size:15px;padding:11px" onclick="shareReport()">Share Report</button>
-    </div>
   </div>
 
   <div class="sum-page active" id="page-0">
     <div class="stat-grid" id="sg-p1"></div>
-    <div><div class="section-head">Head to Head</div><div class="chart-card" style="padding:9px"><table class="cmp-table" id="cmp-table"></table></div></div>
+    <div><div class="section-head">Head to Head</div><div class="chart-card"><table class="cmp-table" id="cmp-table"></table></div></div>
     <div><div class="section-head">Game by Game</div><div style="display:flex;flex-direction:column;gap:5px" id="gbg-list"></div></div>
     <div class="action-row">
       <button class="btn-secondary" onclick="copyReport()">Copy Report</button>
       <button class="btn-secondary" id="sheets-btn" onclick="exportToSheets()">→ Sheets</button>
-    </div>
-    <div style="text-align:center;margin-top:2px">
-      <button onclick="resetSheetUrl()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;padding:10px 20px;width:100%">reset sheet url</button>
+      <button class="btn-secondary btn-reset" onclick="resetSheetUrl()">Reset URL</button>
     </div>
   </div>
 
   <div class="sum-page" id="page-1">
     <div class="chart-card">
-      <div class="chart-title">Match Momentum — Running Point Differential (Isaac − Opp)</div>
-      <svg id="momentum-svg" width="100%" height="130" style="overflow:visible"></svg>
+      <div class="chart-title">Momentum · point differential (Isaac − Opp)</div>
+      <svg id="momentum-svg" width="100%" height="84" style="overflow:visible"></svg>
       <div class="chart-legend">
         <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Isaac ahead</div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Opp ahead</div>
@@ -440,18 +497,17 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
     </div>
     <div class="chart-card">
       <div class="chart-title">Winners vs Errors by Set</div>
-      <svg id="we-svg" width="100%" height="120" style="overflow:visible"></svg>
+      <svg id="we-svg" width="100%" height="84" style="overflow:visible"></svg>
       <div class="chart-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Isaac Winners (IW)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:rgba(26,122,58,.4)"></div>Opp Winners (OW)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Isaac Errors (IE)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:rgba(192,57,43,.4)"></div>Opp Errors (OE)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Isaac winners</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(26,122,58,.4)"></div>Opp winners</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Isaac errors</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(192,57,43,.4)"></div>Opp errors</div>
       </div>
     </div>
     <div id="lead-dis-card" style="display:none">
       <div class="chart-card" style="border-color:var(--amber)">
-        <div class="chart-title" style="color:var(--amber)">⚑ Lead Disengagement</div>
-        <div id="lead-dis-detail" style="font-size:13px;color:var(--text);line-height:1.6"></div>
+        <div id="lead-dis-detail" style="font-size:12px;color:var(--text);line-height:1.35"></div>
       </div>
     </div>
     <div class="chart-card"><div class="chart-title">Error Breakdown</div><table class="cmp-table" id="error-table"></table></div>
@@ -459,14 +515,14 @@ select{width:100%;background:var(--surface);border:1px solid var(--border);borde
 
   <div class="sum-page" id="page-2">
     <div><div class="section-head">Serve Comparison</div>
-      <div class="chart-card" style="padding:9px"><table class="cmp-table" id="serve-table"></table></div>
+      <div class="chart-card"><table class="cmp-table" id="serve-table"></table></div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">Isaac Serve Score Arc (per game serving)</div>
-      <svg id="serve-svg" width="100%" height="100" style="overflow:visible"></svg>
-      <div class="chart-legend"><div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Score: Ace+3, 1st in+2, 2nd in+1, DF−3</div></div>
+      <div class="chart-title">Isaac serve score arc (per game serving)</div>
+      <svg id="serve-svg" width="100%" height="76" style="overflow:visible"></svg>
+      <div class="chart-legend"><div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Ace +3 · 1st in +2 · 2nd in +1 · DF −3</div></div>
     </div>
-    <div class="chart-card"><div class="chart-title">Return Summary</div><div id="return-detail" style="font-size:13px;line-height:1.9;color:var(--text)"></div></div>
+    <div class="chart-card"><div class="chart-title">Return Summary</div><div id="return-detail"></div></div>
   </div>
 
   <div class="sum-page" id="page-3"><div id="ia-body" style="display:flex;flex-direction:column;gap:11px"></div></div>
@@ -1032,7 +1088,7 @@ function buildSummary(){
   if(a.leadDis>0){
     document.getElementById('lead-dis-card').style.display='block';
     const gms=M.games.filter(g=>g.leadDisengaged).map(g=>`Game ${g.number}`).join(', ');
-    document.getElementById('lead-dis-detail').innerHTML=`<strong>${a.leadDis} game${a.leadDis>1?'s':''}</strong> where Isaac led in points then lost.<br>Games: ${gms}`;
+    document.getElementById('lead-dis-detail').innerHTML=`<strong style="color:var(--amber)">⚑ Lead disengagement:</strong> <strong>${a.leadDis} game${a.leadDis>1?'s':''}</strong> where Isaac led in points then lost (${gms}).`;
   }
   document.getElementById('error-table').innerHTML=`
     <tr><th class="left">Error Type</th><th>Isaac</th><th>${os}</th></tr>
@@ -1056,10 +1112,12 @@ function buildSummary(){
   buildInAttack();
   buildServeArc(a.serveGames);
   document.getElementById('return-detail').innerHTML=
-    `Return pts won: <strong>${a.retWon}/${a.retPts} (${pct(a.retWon,a.retPts)}%)</strong><br>
-    Opp forced errors: <strong>${a.oF}</strong><br>
-    Opp unforced errors: <strong>${a.oU}</strong><br>
-    Opp double faults: <strong>${a.o_df}</strong>`;
+    `<div class="ret-grid">
+      <div class="ret-main"><span>Return pts won</span><strong>${a.retWon}/${a.retPts} (${pct(a.retWon,a.retPts)}%)</strong></div>
+      <div><span>Opp forced errors</span><strong>${a.oF}</strong></div>
+      <div><span>Opp unforced errors</span><strong>${a.oU}</strong></div>
+      <div><span>Opp double faults</span><strong>${a.o_df}</strong></div>
+    </div>`;
 }
 
 
@@ -1136,20 +1194,27 @@ function iaData(os){
 
 function buildInAttack(){
   const el=document.getElementById('ia-body');
-  const os=oppShort(),d=iaData(os);
+  const os=oppShort(),d=iaData(os),t=d.t;
   if(!d.has){
-    el.innerHTML='<div class="chart-card"><div class="chart-title">In Attack</div><div style="font-size:13px;line-height:1.6;color:var(--text)">No positions were tagged in this match. Positions are tagged after each rally point.</div></div>';
+    el.innerHTML='<div class="chart-card"><div class="chart-title">In Attack</div><div style="font-size:13px;line-height:1.5;color:var(--text)">No positions were tagged in this match. Positions are tagged after each rally point.</div></div>';
     return;
   }
+  const row=(p)=>{
+    const i=t.i[p],o=t.o[p];
+    return `<tr><td class="label">${P_LBL[p]}</td><td class="neu">${i.n}</td><td class="neu">${pctDash(i.w,i.n)}</td><td class="neu">${i.n?i.e:'–'}</td><td class="neu sep">${o.n}</td><td class="neu">${pctDash(o.w,o.n)}</td><td class="neu">${o.n?o.e:'–'}</td></tr>`;
+  };
+  const posTable=`<tr class="grp"><th></th><th colspan="3">Isaac</th><th colspan="3" class="sep">${esc(os)}</th></tr>
+    <tr><th class="left">Position</th><th>Pts</th><th>Won</th><th>Err</th><th class="sep">Pts</th><th>Won</th><th>Err</th></tr>${['dictate','build','defend'].map(row).join('')}`;
+  const chips=t.byGame.map(r=>`<div class="ia-chip"><span>G${r.num}</span><strong>${r.dict?r.dictW+'/'+r.dict:'–'}</strong><em>${r.tagged} tagged</em></div>`).join('');
+  const lost=t.i.dictate.n===0?'Isaac did not hold Dictate on any tagged point.'
+    :`Lost <strong>${t.lost.n}</strong> of ${t.i.dictate.n} Dictate points: ${t.lost.iErr} on his own errors, ${t.lost.oWin} to opponent winners.${t.lost.n>0?' Did he commit, or hold back?':''}`;
   el.innerHTML=
-    `<div class="ia-note">${d.cover}</div>
-    <div class="stat-grid">${d.kpis.map(k=>`<div class="stat-card"><div class="stat-label">${k.l}</div><div class="stat-val">${k.v}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${k.s}</div></div>`).join('')}</div>
-    <div class="chart-card"><div class="chart-title">Isaac by position</div><table class="cmp-table">${d.isaacRows}</table></div>
-    <div class="chart-card"><div class="chart-title">${esc(os)} by position</div><table class="cmp-table">${d.oppRows}</table></div>
-    <div class="chart-card"><div class="chart-title">Points Isaac won, by position pairing</div><table class="cmp-table">${d.gridRows}</table></div>
-    <div class="chart-card" style="border-color:var(--amber)"><div class="chart-title" style="color:var(--amber)">Missed Dictates</div><div style="font-size:13px;line-height:1.6;color:var(--text)">${d.lostText}</div></div>
-    <div class="chart-card"><div class="chart-title">By game</div><table class="cmp-table">${d.gameRows}</table></div>
-    <div class="ia-note">${d.note}</div>`;
+    `<div class="ia-kpis">${[['Dictate points',d.kpis[0].v,`${t.i.dictate.n} of ${t.tagged}`],['Conversion',d.kpis[1].v,`${t.i.dictate.w} of ${t.i.dictate.n} won`],['Steal',d.kpis[2].v,`${t.i.defend.w} of ${t.i.defend.n} won`],['Errors in Build',d.kpis[3].v,`of ${t.i.build.n} pts`]].map(k=>`<div class="ia-kpi"><div class="k-l">${k[0]}</div><div class="k-v">${k[1]}</div><div class="k-s">${k[2]}</div></div>`).join('')}</div>
+    <div class="chart-card"><div class="chart-title">By position · at the end of the point</div><table class="cmp-table">${posTable}</table></div>
+    <div class="chart-card"><div class="chart-title">Points Isaac won · Isaac ↓ vs ${esc(os)} →</div><table class="cmp-table">${d.gridRows.replace(/<th class="left">[^<]*<\/th>/,'<th class="left"></th>')}</table></div>
+    <div class="chart-card ia-missed"><div class="chart-title">Missed Dictates</div><div class="ia-missed-txt">${lost}</div></div>
+    <div class="chart-card"><div class="chart-title">Dictate points won, by game</div><div class="ia-chips">${chips}</div></div>
+    <div class="ia-note">${t.tagged} of ${t.total} points tagged (aces, double faults and return misses have no rally). Per point, not comparable to ATP per-shot averages.${t.tagged<40?' Small sample.':''}</div>`;
 }
 
 function buildInAttackReport(os){
@@ -1178,7 +1243,7 @@ function svgP(svg,d,f,s,sw){const e=svgE('path');e.setAttribute('d',d);e.setAttr
 
 function buildMomentum(){
   const svg=document.getElementById('momentum-svg');svg.innerHTML='';
-  const W=svg.parentElement.clientWidth||300,H=130;
+  const W=svg.parentElement.clientWidth||300,H=84;
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const vals=[0];let run=0;
   M.games.forEach(g=>g.points.forEach(p=>{
@@ -1201,7 +1266,7 @@ function buildMomentum(){
 
 function buildWEChart(a){
   const svg=document.getElementById('we-svg');svg.innerHTML='';
-  const W=svg.parentElement.clientWidth||300,H=120;
+  const W=svg.parentElement.clientWidth||300,H=84;
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const sets={};
   M.games.forEach(g=>{
@@ -1236,7 +1301,7 @@ function buildWEChart(a){
 function buildServeArc(serveGames){
   const svg=document.getElementById('serve-svg');svg.innerHTML='';
   if(serveGames.length<2){svgT(svg,'Not enough serve games',150,50,'middle','#9a8878',12);return;}
-  const W=svg.parentElement.clientWidth||300,H=100;
+  const W=svg.parentElement.clientWidth||300,H=76;
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const vals=serveGames.map(g=>g.score);
   const pad={l:24,r:16,t:10,b:16},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
